@@ -26,6 +26,13 @@ void ASCharacter::BeginPlay()
 	
 }
 
+void ASCharacter::MoveX(float AxisValue)
+{
+	/* Clamp so that pressing multiple bound keys don't compound e.g. W and up arrow */
+	AxisValue = FMath::Clamp(AxisValue, -1.0f, 1.0f);
+	AddMovementInput(GetActorForwardVector(), AxisValue);
+}
+
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
 {
@@ -38,5 +45,7 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAxis("MoveX", this, &ASCharacter::MoveX);
+	PlayerInputComponent->BindAxis("LookX", this, &APawn::AddControllerYawInput);
 }
 

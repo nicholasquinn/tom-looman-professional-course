@@ -27,6 +27,8 @@ protected:
 
 private:	
 
+	void MoveX(float AxisValue);
+
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* CameraComp;
 
