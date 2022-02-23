@@ -4,6 +4,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 
@@ -18,6 +19,25 @@ ASCharacter::ASCharacter()
 
 	SpringArmComp->SetupAttachment(RootComponent);
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	/* The below 3 settings give the effect of being able to look around without the player itself rotating when standing still,
+	 * but then rotating the player over time to face the movement of direction once moving. */
+
+	/* 1. We want to orient the spring arm to the same rotation as the player controller, that way we can look around with the camera. */
+	SpringArmComp->bUsePawnControlRotation = true;
+
+	/* 2. Don't make the Character's Yaw rotation match the Controller's yaw rotation, this is what allows us to look around
+	 * freely when not moving i.e. you can rotate the camera around to look at the character's face. */
+	bUseControllerRotationYaw = false;
+	
+	/* 3. bOrientRotationToMovement rotates the Character toward the direction of acceleration, using RotationRate as the rate of rotation change.
+	 * This is what makes the character correct its rotation once moving e.g. if we are looking at the character face, then move left, the
+	 * Character will rotate to be facing the left. Normally you will want to make sure that other settings are cleared, such as 
+	 * bUseControllerRotationYaw on the Character, as they go against this behavior, as explained above.
+	 * Note: there is also bUseControllerDesiredRotation, which smoothly rotates the Character toward the Controller's desired rotation
+	 * i.e. where you look (Controller->ControlRotation), the character lerps to look there also, using RotationRate as the rate of rotation change. 
+	 * OrientRotationToMovement takes precedence over bUseControllerDesiredRotation. */
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 // Called when the game starts or when spawned
@@ -29,9 +49,38 @@ void ASCharacter::BeginPlay()
 
 void ASCharacter::MoveX(float AxisValue)
 {
-	/* Clamp so that pressing multiple bound keys don't compound e.g. W and up arrow */
-	AxisValue = FMath::Clamp(AxisValue, -1.0f, 1.0f);
-	AddMovementInput(GetActorForwardVector(), AxisValue);
+	FRotator ControllerRotation = GetControlRotation();
+	/* Zero out Pitch and Roll, only interested in Yaw as it is rotation around the Z (up)
+	 * Axis, and therefore deals with movement direction. */
+	ControllerRotation.Pitch = 0;
+	ControllerRotation.Roll = 0;
+
+	/* No need to clamp AxisValue for ACharacter, it is done internally - see CharacterMovementComponent.cpp 7094 */
+	AddMovementInput(ControllerRotation.Vector(), AxisValue);
+}
+
+void ASCharacter::MoveY(float AxisValue)
+{
+	FRotator ControllerRotation = GetControlRotation();
+	/* Zero out Pitch and Roll, only interested in Yaw as it is rotation around the Z (up)
+	 * Axis, and therefore deals with movement direction. */
+	ControllerRotation.Pitch = 0; 
+	ControllerRotation.Roll = 0;
+
+	/* Basically stealing the implementation of this Blueprint function from KismetMathLibrary 815
+	 * We could (and probably should) include KismetMathLibrary rather than stealing.
+	 * Note that we don't bother copying FVector UKismetMathLibrary::GetForwardVector(FRotator InRot)
+	 * above as it is literally return InRot.Vector();
+	 * 
+	 *	FVector UKismetMathLibrary::GetRightVector(FRotator InRot)
+	 *	{
+	 *		return FRotationMatrix(InRot).GetScaledAxis(EAxis::Y);
+	 *	}
+	 *
+	*/
+	const FVector ControllerRightVector = FRotationMatrix(ControllerRotation).GetScaledAxis(EAxis::Y);
+
+	AddMovementInput(ControllerRightVector, AxisValue);
 }
 
 // Called every frame
@@ -62,6 +111,9 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAxis("MoveX", this, &ASCharacter::MoveX);
+	PlayerInputComponent->BindAxis("MoveY", this, &ASCharacter::MoveY);
+
 	PlayerInputComponent->BindAxis("LookX", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("LookY", this, &APawn::AddControllerPitchInput);
 }
 
