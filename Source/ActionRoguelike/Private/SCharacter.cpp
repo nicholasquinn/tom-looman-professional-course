@@ -83,6 +83,20 @@ void ASCharacter::MoveY(float AxisValue)
 	AddMovementInput(ControllerRightVector, AxisValue);
 }
 
+void ASCharacter::PrimaryAttack()
+{
+	/* Get the location of the hand socket. Sockets are added to skeletal meshes to mark positions,
+	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles*/
+	const FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+
+	/* FTransform is a matrix of 3 vectors; location, rotation, and scale */
+	const FTransform SpawnTransform(GetControlRotation(), HandLocation);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTransform, SpawnParams);
+}
+
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
 {
@@ -115,5 +129,7 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAxis("LookX", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookY", this, &APawn::AddControllerPitchInput);
+
+	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
 }
 
