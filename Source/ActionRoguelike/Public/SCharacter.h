@@ -41,4 +41,7 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class USpringArmComponent* SpringArmComp;
 
+	UPROPERTY(VisibleAnywhere)
+	class USInteractionComponent* InteractionComp;
+
 };

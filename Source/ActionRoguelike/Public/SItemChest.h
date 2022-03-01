@@ -22,6 +22,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	/* Public, as it reflects the same access level as the Interact declaration.
+	 * Other Actors need to be able to call Interact on this actor to interact with it. */
 	void Interact_Implementation(APawn* InstigatorPawn);
 
 protected:
@@ -37,7 +39,6 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float TargetPitch;
 
-private:	
-
+private:
 
 };
