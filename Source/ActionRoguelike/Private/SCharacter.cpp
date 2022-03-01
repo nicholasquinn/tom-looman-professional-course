@@ -6,6 +6,7 @@
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "SInteractionComponent.h"
 
 
 // Sets default values
@@ -16,6 +17,7 @@ ASCharacter::ASCharacter()
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	InteractionComp = CreateDefaultSubobject<USInteractionComponent>(TEXT("InteractionComp"));
 
 	SpringArmComp->SetupAttachment(RootComponent);
 	CameraComp->SetupAttachment(SpringArmComp);
@@ -38,6 +40,9 @@ ASCharacter::ASCharacter()
 	 * i.e. where you look (Controller->ControlRotation), the character lerps to look there also, using RotationRate as the rate of rotation change. 
 	 * OrientRotationToMovement takes precedence over bUseControllerDesiredRotation. */
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	/* Set a sensible default for the attack timer duration */
+	PrimaryAttackTimerDuration = 0.2f;
 }
 
 // Called when the game starts or when spawned
@@ -85,8 +90,18 @@ void ASCharacter::MoveY(float AxisValue)
 
 void ASCharacter::PrimaryAttack()
 {
+	/* play the animation asset assigned in the editor */
+	PlayAnimMontage(AttackAnim);
+
+	/* Set a one-shot timer that will call PrimaryAttackCallback when it expires. */
+	GetWorldTimerManager().SetTimer(PrimaryAttackTimerHandle, this, &ASCharacter::PrimaryAttackCallback, PrimaryAttackTimerDuration);
+}
+
+// Called after the Timer referenced by PrimaryAttackTimerHandle expires, which takes PrimaryAttackTimerDuration seconds.
+void ASCharacter::PrimaryAttackCallback()
+{
 	/* Get the location of the hand socket. Sockets are added to skeletal meshes to mark positions,
-	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles*/
+	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles */
 	const FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 
 	/* FTransform is a matrix of 3 vectors; location, rotation, and scale */
@@ -133,5 +148,9 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+
+	/* You can bind directly to the instance of the interaction component that this character class owns. 
+	 * You don't need to make a middle-man method. */
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this->InteractionComp, &USInteractionComponent::PrimaryInteract);
 }
 
