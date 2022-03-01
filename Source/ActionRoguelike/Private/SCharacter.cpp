@@ -40,6 +40,9 @@ ASCharacter::ASCharacter()
 	 * i.e. where you look (Controller->ControlRotation), the character lerps to look there also, using RotationRate as the rate of rotation change. 
 	 * OrientRotationToMovement takes precedence over bUseControllerDesiredRotation. */
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	/* Set a sensible default for the attack timer duration */
+	PrimaryAttackTimerDuration = 0.2f;
 }
 
 // Called when the game starts or when spawned
@@ -87,8 +90,18 @@ void ASCharacter::MoveY(float AxisValue)
 
 void ASCharacter::PrimaryAttack()
 {
+	/* play the animation asset assigned in the editor */
+	PlayAnimMontage(AttackAnim);
+
+	/* Set a one-shot timer that will call PrimaryAttackCallback when it expires. */
+	GetWorldTimerManager().SetTimer(PrimaryAttackTimerHandle, this, &ASCharacter::PrimaryAttackCallback, PrimaryAttackTimerDuration);
+}
+
+// Called after the Timer referenced by PrimaryAttackTimerHandle expires, which takes PrimaryAttackTimerDuration seconds.
+void ASCharacter::PrimaryAttackCallback()
+{
 	/* Get the location of the hand socket. Sockets are added to skeletal meshes to mark positions,
-	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles*/
+	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles */
 	const FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 
 	/* FTransform is a matrix of 3 vectors; location, rotation, and scale */

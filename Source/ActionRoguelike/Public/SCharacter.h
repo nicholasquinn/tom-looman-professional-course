@@ -25,15 +25,25 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Attack")
 	TSubclassOf<AActor> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	class UAnimMontage* AttackAnim;
 
 private:	
 
 	void MoveX(float AxisValue);
 	void MoveY(float AxisValue);
 
+	/* PrimaryAttack plays an attack animation, then sets a timer that calls PrimaryAttackCallback
+	 * when it expires. The better way of doing this is using animation notifies, which is basically
+	 * an event that can be raised from an animation and some logic can be bound to it. */
 	void PrimaryAttack();
+	void PrimaryAttackCallback();
+	UPROPERTY(EditAnywhere, Category="Attack")
+	float PrimaryAttackTimerDuration;
+	FTimerHandle PrimaryAttackTimerHandle;
 
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* CameraComp;
@@ -43,5 +53,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	class USInteractionComponent* InteractionComp;
+
 
 };
