@@ -46,6 +46,28 @@ void ASMagicProjectile::BeginPlay()
 	
 }
 
+
+void ASMagicProjectile::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	/* Try get the instigator so we can ignore all collisions from one another */
+	if (APawn* InstigatorPawn = GetInstigator())
+	{
+		/* Tells this component whether to ignore collision with all components of a specific Actor when this component is moved.
+		 * Components on the other Actor may also need to be told to do the same when they move.
+		 * Does not affect movement of this component when simulating physics. 
+		 * Basically, tell the projectile to ignore collisions with whomever shot it. */
+		SphereComp->IgnoreActorWhenMoving(InstigatorPawn, true);
+		/* As stated above, may need to tell the Instigator to ignore the projectile. */
+		InstigatorPawn->MoveIgnoreActorAdd(this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s:%d - InstigatorPawn was NULL"), TEXT(__FILE__), __LINE__);
+	}
+}
+
 // Called every frame
 void ASMagicProjectile::Tick(float DeltaTime)
 {

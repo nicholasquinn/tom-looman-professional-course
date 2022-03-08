@@ -107,6 +107,7 @@ void ASCharacter::PrimaryAttackCallback()
 	/* FTransform is a matrix of 3 vectors; location, rotation, and scale */
 	const FTransform SpawnTransform(GetControlRotation(), HandLocation);
 	FActorSpawnParameters SpawnParams;
+	SpawnParams.Instigator = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTransform, SpawnParams);
