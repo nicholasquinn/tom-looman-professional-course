@@ -91,17 +91,8 @@ void ASCharacter::MoveY(float AxisValue)
 	AddMovementInput(ControllerRightVector, AxisValue);
 }
 
-void ASCharacter::PrimaryAttack()
-{
-	/* play the animation asset assigned in the editor */
-	PlayAnimMontage(AttackAnim);
 
-	/* Set a one-shot timer that will call PrimaryAttackCallback when it expires. */
-	GetWorldTimerManager().SetTimer(PrimaryAttackTimerHandle, this, &ASCharacter::PrimaryAttackCallback, PrimaryAttackTimerDuration);
-}
-
-// Called after the Timer referenced by PrimaryAttackTimerHandle expires, which takes PrimaryAttackTimerDuration seconds.
-void ASCharacter::PrimaryAttackCallback()
+void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpawn)
 {
 	/* Perform a trace to try find the aim point. If nothing is hit, then just take
 	 * the end of the trace as the aim point. */
@@ -129,7 +120,50 @@ void ASCharacter::PrimaryAttackCallback()
 	SpawnParams.Instigator = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTransform, SpawnParams);
+	GetWorld()->SpawnActor<AActor>(ProjectileTypeToSpawn, SpawnTransform, SpawnParams);
+}
+
+/* Each <Foo>Attack function plays its corresponding animation, then sets a timer via it's corresponding
+ * timer handle, for its corresponding duration, which calls the corresponding callback. */
+void ASCharacter::PrimaryAttack()
+{
+	/* play the animation asset assigned in the editor */
+	PlayAnimMontage(PrimaryAttackAnim);
+
+	/* Set a one-shot timer that will call PrimaryAttackCallback when it expires. */
+	GetWorldTimerManager().SetTimer(PrimaryAttackTimerHandle, this, &ASCharacter::PrimaryAttackCallback, PrimaryAttackTimerDuration);
+}
+
+/* See PrimaryAttack for explanation */
+void ASCharacter::SecondaryAttack()
+{
+	PlayAnimMontage(SecondaryAttackAnim);
+	GetWorldTimerManager().SetTimer(SecondaryAttackTimerHandle, this, &ASCharacter::SecondaryAttackCallback, SecondaryAttackTimerDuration);
+}
+
+/* See PrimaryAttack for explanation */
+void ASCharacter::UltimateAttack()
+{
+	PlayAnimMontage(UltimateAttackAnim);
+	GetWorldTimerManager().SetTimer(UltimateAttackTimerHandle, this, &ASCharacter::UltimateAttackCallback, UltimateAttackTimerDuration);
+}
+
+// Called after the Timer referenced by PrimaryAttackTimerHandle expires, which takes PrimaryAttackTimerDuration seconds.
+void ASCharacter::PrimaryAttackCallback()
+{
+	Attack(PrimaryProjectileClass);
+}
+
+
+void ASCharacter::SecondaryAttackCallback()
+{
+	unimplemented();
+}
+
+
+void ASCharacter::UltimateAttackCallback()
+{
+	unimplemented();
 }
 
 // Called every frame
@@ -137,6 +171,33 @@ void ASCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	DrawControlVsPawnRotationDebugArrows();
+}
+
+// Called to bind functionality to input
+void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAxis("MoveX", this, &ASCharacter::MoveX);
+	PlayerInputComponent->BindAxis("MoveY", this, &ASCharacter::MoveY);
+
+	PlayerInputComponent->BindAxis("LookX", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("LookY", this, &APawn::AddControllerPitchInput);
+
+	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("SecondaryAttack", IE_Pressed, this, &ASCharacter::SecondaryAttack);
+	PlayerInputComponent->BindAction("UltimateAttack", IE_Pressed, this, &ASCharacter::UltimateAttack);
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+
+	/* You can bind directly to the instance of the interaction component that this character class owns. 
+	 * You don't need to make a middle-man method. */
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this->InteractionComp, &USInteractionComponent::PrimaryInteract);
+}
+
+void ASCharacter::DrawControlVsPawnRotationDebugArrows()
+{
 	/* --Rotation Visualization-- */
 	const float DrawScale = 100.0f;
 	const float Thickness = 5.0f;
@@ -152,25 +213,5 @@ void ASCharacter::Tick(float DeltaTime)
 	FVector ControllerDirection_LineEnd = LineStart + (GetControlRotation().Vector() * 100.0f);
 	// Draw 'Controller' Rotation ('PlayerController' that 'possessed' this character)
 	DrawDebugDirectionalArrow(GetWorld(), LineStart, ControllerDirection_LineEnd, DrawScale, FColor::Green, false, 0.0f, 0, Thickness);
-}
-
-// Called to bind functionality to input
-void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	PlayerInputComponent->BindAxis("MoveX", this, &ASCharacter::MoveX);
-	PlayerInputComponent->BindAxis("MoveY", this, &ASCharacter::MoveY);
-
-	PlayerInputComponent->BindAxis("LookX", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookY", this, &APawn::AddControllerPitchInput);
-
-	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
-
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-
-	/* You can bind directly to the instance of the interaction component that this character class owns. 
-	 * You don't need to make a middle-man method. */
-	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this->InteractionComp, &USInteractionComponent::PrimaryInteract);
 }
 
