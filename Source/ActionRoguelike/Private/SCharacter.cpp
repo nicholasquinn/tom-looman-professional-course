@@ -151,19 +151,22 @@ void ASCharacter::UltimateAttack()
 // Called after the Timer referenced by PrimaryAttackTimerHandle expires, which takes PrimaryAttackTimerDuration seconds.
 void ASCharacter::PrimaryAttackCallback()
 {
+	ensureAlways(PrimaryProjectileClass);
 	Attack(PrimaryProjectileClass);
 }
 
 
 void ASCharacter::SecondaryAttackCallback()
 {
+	ensureAlways(SecondaryProjectileClass);
 	unimplemented();
 }
 
 
 void ASCharacter::UltimateAttackCallback()
 {
-	unimplemented();
+	ensureAlways(UltimateProjectileClass);
+	Attack(UltimateProjectileClass);
 }
 
 // Called every frame
