@@ -43,6 +43,9 @@ ASCharacter::ASCharacter()
 
 	/* Set a sensible default for the attack timer duration */
 	PrimaryAttackTimerDuration = 0.2f;
+
+	/* Normalized aim direction vector gets multiplied by this scaler */
+	AimTraceDistance = 10000;
 }
 
 // Called when the game starts or when spawned
@@ -100,12 +103,28 @@ void ASCharacter::PrimaryAttack()
 // Called after the Timer referenced by PrimaryAttackTimerHandle expires, which takes PrimaryAttackTimerDuration seconds.
 void ASCharacter::PrimaryAttackCallback()
 {
+	/* Perform a trace to try find the aim point. If nothing is hit, then just take
+	 * the end of the trace as the aim point. */
+	FHitResult OutHit;
+	const FVector TraceStart = CameraComp->GetComponentLocation();
+	FVector TraceEnd = TraceStart + (CameraComp->GetForwardVector() * AimTraceDistance);
+	FCollisionObjectQueryParams AimTraceQuerySettings;
+	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_WorldStatic);
+	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_WorldDynamic);
+	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_Pawn);
+	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_PhysicsBody);
+	TraceEnd = GetWorld()->LineTraceSingleByObjectType(OutHit, TraceStart, TraceEnd, AimTraceQuerySettings)
+		? OutHit.ImpactPoint : TraceEnd;
+
+	/* Draw the result of the line trace as a debug line that lasts for 2 seconds */
+	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Orange, false, 2.0f);
+
 	/* Get the location of the hand socket. Sockets are added to skeletal meshes to mark positions,
 	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles */
 	const FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 
-	/* FTransform is a matrix of 3 vectors; location, rotation, and scale */
-	const FTransform SpawnTransform(GetControlRotation(), HandLocation);
+	const FTransform SpawnTransform = FTransform((TraceEnd - HandLocation).Rotation(), HandLocation);
+
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Instigator = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

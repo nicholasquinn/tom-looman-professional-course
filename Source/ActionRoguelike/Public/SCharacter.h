@@ -44,6 +44,8 @@ private:
 	UPROPERTY(EditAnywhere, Category="Attack")
 	float PrimaryAttackTimerDuration;
 	FTimerHandle PrimaryAttackTimerHandle;
+	UPROPERTY(EditAnywhere)
+	int64 AimTraceDistance;
 
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* CameraComp;
