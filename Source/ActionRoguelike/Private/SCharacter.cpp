@@ -43,6 +43,9 @@ ASCharacter::ASCharacter()
 
 	/* Set a sensible default for the attack timer duration */
 	PrimaryAttackTimerDuration = 0.2f;
+
+	/* Normalized aim direction vector gets multiplied by this scaler */
+	AimTraceDistance = 10000;
 }
 
 // Called when the game starts or when spawned
@@ -88,29 +91,82 @@ void ASCharacter::MoveY(float AxisValue)
 	AddMovementInput(ControllerRightVector, AxisValue);
 }
 
+
+void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpawn)
+{
+	/* Perform a trace to try find the aim point. If nothing is hit, then just take
+	 * the end of the trace as the aim point. */
+	FHitResult OutHit;
+	const FVector TraceStart = CameraComp->GetComponentLocation();
+	FVector TraceEnd = TraceStart + (CameraComp->GetForwardVector() * AimTraceDistance);
+	FCollisionObjectQueryParams AimTraceQuerySettings;
+	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_WorldStatic);
+	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_WorldDynamic);
+	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_Pawn);
+	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_PhysicsBody);
+	TraceEnd = GetWorld()->LineTraceSingleByObjectType(OutHit, TraceStart, TraceEnd, AimTraceQuerySettings)
+		? OutHit.ImpactPoint : TraceEnd;
+
+	/* Draw the result of the line trace as a debug line that lasts for 2 seconds */
+	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Orange, false, 2.0f);
+
+	/* Get the location of the hand socket. Sockets are added to skeletal meshes to mark positions,
+	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles */
+	const FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+
+	const FTransform SpawnTransform = FTransform((TraceEnd - HandLocation).Rotation(), HandLocation);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Instigator = this;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	GetWorld()->SpawnActor<AActor>(ProjectileTypeToSpawn, SpawnTransform, SpawnParams);
+}
+
+/* Each <Foo>Attack function plays its corresponding animation, then sets a timer via it's corresponding
+ * timer handle, for its corresponding duration, which calls the corresponding callback. */
 void ASCharacter::PrimaryAttack()
 {
 	/* play the animation asset assigned in the editor */
-	PlayAnimMontage(AttackAnim);
+	PlayAnimMontage(PrimaryAttackAnim);
 
 	/* Set a one-shot timer that will call PrimaryAttackCallback when it expires. */
 	GetWorldTimerManager().SetTimer(PrimaryAttackTimerHandle, this, &ASCharacter::PrimaryAttackCallback, PrimaryAttackTimerDuration);
 }
 
+/* See PrimaryAttack for explanation */
+void ASCharacter::SecondaryAttack()
+{
+	PlayAnimMontage(SecondaryAttackAnim);
+	GetWorldTimerManager().SetTimer(SecondaryAttackTimerHandle, this, &ASCharacter::SecondaryAttackCallback, SecondaryAttackTimerDuration);
+}
+
+/* See PrimaryAttack for explanation */
+void ASCharacter::UltimateAttack()
+{
+	PlayAnimMontage(UltimateAttackAnim);
+	GetWorldTimerManager().SetTimer(UltimateAttackTimerHandle, this, &ASCharacter::UltimateAttackCallback, UltimateAttackTimerDuration);
+}
+
 // Called after the Timer referenced by PrimaryAttackTimerHandle expires, which takes PrimaryAttackTimerDuration seconds.
 void ASCharacter::PrimaryAttackCallback()
 {
-	/* Get the location of the hand socket. Sockets are added to skeletal meshes to mark positions,
-	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles */
-	const FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	ensureAlways(PrimaryProjectileClass);
+	Attack(PrimaryProjectileClass);
+}
 
-	/* FTransform is a matrix of 3 vectors; location, rotation, and scale */
-	const FTransform SpawnTransform(GetControlRotation(), HandLocation);
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Instigator = this;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTransform, SpawnParams);
+void ASCharacter::SecondaryAttackCallback()
+{
+	ensureAlways(SecondaryProjectileClass);
+	Attack(SecondaryProjectileClass);
+}
+
+
+void ASCharacter::UltimateAttackCallback()
+{
+	ensureAlways(UltimateProjectileClass);
+	Attack(UltimateProjectileClass);
 }
 
 // Called every frame
@@ -118,6 +174,33 @@ void ASCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	DrawControlVsPawnRotationDebugArrows();
+}
+
+// Called to bind functionality to input
+void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAxis("MoveX", this, &ASCharacter::MoveX);
+	PlayerInputComponent->BindAxis("MoveY", this, &ASCharacter::MoveY);
+
+	PlayerInputComponent->BindAxis("LookX", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("LookY", this, &APawn::AddControllerPitchInput);
+
+	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("SecondaryAttack", IE_Pressed, this, &ASCharacter::SecondaryAttack);
+	PlayerInputComponent->BindAction("UltimateAttack", IE_Pressed, this, &ASCharacter::UltimateAttack);
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+
+	/* You can bind directly to the instance of the interaction component that this character class owns. 
+	 * You don't need to make a middle-man method. */
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this->InteractionComp, &USInteractionComponent::PrimaryInteract);
+}
+
+void ASCharacter::DrawControlVsPawnRotationDebugArrows()
+{
 	/* --Rotation Visualization-- */
 	const float DrawScale = 100.0f;
 	const float Thickness = 5.0f;
@@ -133,25 +216,5 @@ void ASCharacter::Tick(float DeltaTime)
 	FVector ControllerDirection_LineEnd = LineStart + (GetControlRotation().Vector() * 100.0f);
 	// Draw 'Controller' Rotation ('PlayerController' that 'possessed' this character)
 	DrawDebugDirectionalArrow(GetWorld(), LineStart, ControllerDirection_LineEnd, DrawScale, FColor::Green, false, 0.0f, 0, Thickness);
-}
-
-// Called to bind functionality to input
-void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	PlayerInputComponent->BindAxis("MoveX", this, &ASCharacter::MoveX);
-	PlayerInputComponent->BindAxis("MoveY", this, &ASCharacter::MoveY);
-
-	PlayerInputComponent->BindAxis("LookX", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookY", this, &APawn::AddControllerPitchInput);
-
-	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
-
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-
-	/* You can bind directly to the instance of the interaction component that this character class owns. 
-	 * You don't need to make a middle-man method. */
-	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this->InteractionComp, &USInteractionComponent::PrimaryInteract);
 }
 
