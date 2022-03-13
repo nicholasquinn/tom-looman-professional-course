@@ -159,7 +159,7 @@ void ASCharacter::PrimaryAttackCallback()
 void ASCharacter::SecondaryAttackCallback()
 {
 	ensureAlways(SecondaryProjectileClass);
-	unimplemented();
+	Attack(SecondaryProjectileClass);
 }
 
 

@@ -15,6 +15,8 @@ public:
 	// Sets default values for this actor's properties
 	ASMagicProjectileBase();
 
+	virtual void PostInitProperties() override;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -36,6 +38,9 @@ protected:
 	/* The movement component that powers the projectile movement */
 	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* MovementComp;
+
+	UPROPERTY(EditDefaultsOnly)
+	float Speed = 1000.0f;
 
 private:	
 	

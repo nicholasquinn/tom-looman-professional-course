@@ -29,13 +29,24 @@ ASMagicProjectileBase::ASMagicProjectileBase()
 	SphereComp->SetCollisionProfileName(FName("Projectile"));
 
 	/* initial speed, overrides initial velocity (which then is interpreted as initial direction) */
-	MovementComp->InitialSpeed = 1000.0f;
+	MovementComp->InitialSpeed = Speed = 1000.0f;
 	/* whether the initial velocity is in local space */
 	MovementComp->bInitialVelocityInLocalSpace = true;
 	/* whether this projectile will have its rotation updated each frame to match the direction of its velocity. */
 	MovementComp->bRotationFollowsVelocity = true;
 	/* Don't let gravity effect the path of the projectile */
 	MovementComp->ProjectileGravityScale = 0.0f;
+}
+
+void ASMagicProjectileBase::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+	/* Both the movement comps initial speed, and the Speed member were defaulted to 1000 in the ctor,
+	 * however, it is an exposed property, and so we need to set it here in case it was tweaked in the
+	 * editor. Note we could just set it here once, and not have the ctor line, but ill keep both
+	 * just for clarity. */
+	MovementComp->InitialSpeed = Speed;
 }
 
 void ASMagicProjectileBase::PostInitializeComponents()
