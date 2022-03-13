@@ -13,12 +13,27 @@ class ACTIONROGUELIKE_API ASMagicProjectile : public ASMagicProjectileBase
 {
 	GENERATED_BODY()
 	
-public:	
+public:
 
+	ASMagicProjectile();
 
 protected:
 
+	virtual void PostInitializeComponents() override;
 
-private:	
+	UFUNCTION()
+	void OnOverlapTryDamageOtherActor(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+	);
+
+private:
+
+	UPROPERTY(EditDefaultsOnly)
+	float Damage;
 
 };

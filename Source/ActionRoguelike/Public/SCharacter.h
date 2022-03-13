@@ -53,6 +53,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* UltimateAttackAnim;
 
+	/* Attributes */
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components | Attributes")
+	class USAttributeComponent* AttributeComp;
+
 private:	
 
 	void MoveX(float AxisValue);
@@ -95,13 +100,13 @@ private:
 	UPROPERTY(EditAnywhere)
 	int64 AimTraceDistance;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Components | Core")
 	class UCameraComponent* CameraComp;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components | Core")
 	class USpringArmComponent* SpringArmComp;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components | Core")
 	class USInteractionComponent* InteractionComp;
 
 	void DrawControlVsPawnRotationDebugArrows();
