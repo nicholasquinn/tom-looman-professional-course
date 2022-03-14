@@ -30,7 +30,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
 	float Health;
 
-	/* This is an actual instance of the FOnHealthChanged delegate/event/broadcaster. */
+	/* This is an actual instance of the FOnHealthChanged delegate/event/broadcaster
+	 * to which we can bind to via blueprints. Even though this is in the protected
+	 * section, because it is BlueprintAssignable, we can actually assign to this
+	 * delegate from outside the class. For example, we got a reference to the 
+	 * player pawn in the health widget, then got a reference to this component
+	 * via the pawn reference, then called the Assign On Health Change event
+	 * node to assign a new red blueprint event node to this delegate. Note that
+	 * this is an instance of the delegate, and other instances calling broadcast
+	 * wont cause this one's subscribers to be notified - they are separate. */
 	UPROPERTY(BlueprintAssignable)
 	FOnHealthChanged OnHealthChanged;
 
