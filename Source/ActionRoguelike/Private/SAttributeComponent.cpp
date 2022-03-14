@@ -14,6 +14,11 @@ USAttributeComponent::USAttributeComponent()
 bool USAttributeComponent::ApplyHealthChange(float DeltaHealth)
 {
 	Health += DeltaHealth;
+
+	/* It is safe to call Broadcast on Multicast Delegates, even if no 
+	 * functions have been bound */
+	OnHealthChanged.Broadcast(nullptr, this, Health, DeltaHealth);
+
 	/* For now, just return whether they are still alive */
 	return Health > 0.0f;
 }
