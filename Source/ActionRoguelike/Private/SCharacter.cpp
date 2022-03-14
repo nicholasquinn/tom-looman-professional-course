@@ -6,6 +6,7 @@
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "SAttributeComponent.h"
 #include "SInteractionComponent.h"
 
 
@@ -18,6 +19,7 @@ ASCharacter::ASCharacter()
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>(TEXT("InteractionComp"));
+	AttributeComp = CreateDefaultSubobject<USAttributeComponent>(TEXT("AttributeComp"));
 
 	SpringArmComp->SetupAttachment(RootComponent);
 	CameraComp->SetupAttachment(SpringArmComp);
