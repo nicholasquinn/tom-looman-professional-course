@@ -101,12 +101,20 @@ void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpaw
 	FHitResult OutHit;
 	const FVector TraceStart = CameraComp->GetComponentLocation();
 	FVector TraceEnd = TraceStart + (CameraComp->GetForwardVector() * AimTraceDistance);
-	FCollisionObjectQueryParams AimTraceQuerySettings;
-	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_WorldStatic);
-	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_WorldDynamic);
-	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_Pawn);
-	AimTraceQuerySettings.AddObjectTypesToQuery(ECC_PhysicsBody);
-	TraceEnd = GetWorld()->LineTraceSingleByObjectType(OutHit, TraceStart, TraceEnd, AimTraceQuerySettings)
+	FCollisionObjectQueryParams AimTraceQueryObjectSettings;
+	AimTraceQueryObjectSettings.AddObjectTypesToQuery(ECC_WorldStatic);
+	AimTraceQueryObjectSettings.AddObjectTypesToQuery(ECC_WorldDynamic);
+	AimTraceQueryObjectSettings.AddObjectTypesToQuery(ECC_Pawn);
+	AimTraceQueryObjectSettings.AddObjectTypesToQuery(ECC_PhysicsBody);
+
+	/* Ignore ourselves (we have ECC_Pawn enabled, but that's for hitting other pawns,
+	 * such as enemies, not ourselves. You can specify general trace settings with the
+	 * FCollisionQueryParams type, the ...ObjectQueryParams one is just for setting
+	 * which object types to detect. */
+	FCollisionQueryParams AimTraceQuerySettings;
+	AimTraceQuerySettings.AddIgnoredActor(this);
+
+	TraceEnd = GetWorld()->LineTraceSingleByObjectType(OutHit, TraceStart, TraceEnd, AimTraceQueryObjectSettings, AimTraceQuerySettings)
 		? OutHit.ImpactPoint : TraceEnd;
 
 	/* Draw the result of the line trace as a debug line that lasts for 2 seconds */

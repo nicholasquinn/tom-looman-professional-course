@@ -35,7 +35,9 @@ void ASMagicProjectile::OnOverlapTryDamageOtherActor
 	const FHitResult& SweepResult
 )
 {
-	if (OtherActor)
+	/* We can only damage the other actor if it isn't null (obviously), and if it isn't null, 
+	 * we also don't want to damage the person who fired the projectile. */
+	if (OtherActor && OtherActor != GetInstigator())
 	{
 		if (USAttributeComponent* AttributeComp = Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass())))
 		{
