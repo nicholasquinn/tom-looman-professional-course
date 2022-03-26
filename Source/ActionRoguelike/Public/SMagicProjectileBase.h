@@ -17,15 +17,23 @@ public:
 
 	virtual void PostInitProperties() override;
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void NotifyHit(
+		class UPrimitiveComponent* MyComp,
+		AActor* Other, 
+		class UPrimitiveComponent* OtherComp, 
+		bool bSelfMoved, 
+		FVector HitLocation, 
+		FVector HitNormal, 
+		FVector NormalImpulse, 
+		const FHitResult& Hit
+	) override;
 
 protected:
 
 	virtual void PostInitializeComponents() override;
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	UFUNCTION(BlueprintNativeEvent)
+	void Explode();
 
 	/* The collision geometry for the projectile itself */
 	UPROPERTY(VisibleAnywhere)
@@ -38,6 +46,9 @@ protected:
 	/* The movement component that powers the projectile movement */
 	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* MovementComp;
+
+	UPROPERTY(EditDefaultsOnly)
+	class UParticleSystem* ImpactEffect;
 
 	UPROPERTY(EditDefaultsOnly)
 	float Speed = 1000.0f;

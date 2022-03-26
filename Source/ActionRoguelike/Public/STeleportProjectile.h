@@ -42,16 +42,13 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	float TeleportWaitTime;
 
-	void Explode();
+	virtual void Explode_Implementation() override;
 
 	void TeleportInstigator();
 
 	/* Reference to the sound asset to play when we teleport. Set via the editor. */
 	UPROPERTY(EditDefaultsOnly)
 	class USoundBase* TeleportSound;
-
-	UPROPERTY(EditDefaultsOnly)
-	class UParticleSystem* ExplosionEffect;
 
 	/* When this projectile hits something, we want to explode prematurely */
 	virtual void NotifyHit(

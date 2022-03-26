@@ -5,6 +5,7 @@
 
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 
 
@@ -70,17 +71,27 @@ void ASMagicProjectileBase::PostInitializeComponents()
 	}
 }
 
-// Called when the game starts or when spawned
-void ASMagicProjectileBase::BeginPlay()
+void ASMagicProjectileBase::Explode_Implementation()
 {
-	Super::BeginPlay();
-	
+	if (ensure(!IsPendingKill()))
+	{
+		ensure(ImpactEffect);
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, GetActorLocation(), GetActorRotation());
+		Destroy();
+	}
 }
 
-// Called every frame
-void ASMagicProjectileBase::Tick(float DeltaTime)
+void ASMagicProjectileBase::NotifyHit(
+	class UPrimitiveComponent* MyComp, 
+	AActor* Other, 
+	class UPrimitiveComponent* OtherComp, 
+	bool bSelfMoved, 
+	FVector HitLocation, 
+	FVector HitNormal, 
+	FVector NormalImpulse, 
+	const FHitResult& Hit
+)
 {
-	Super::Tick(DeltaTime);
-
+	Explode();
 }
 

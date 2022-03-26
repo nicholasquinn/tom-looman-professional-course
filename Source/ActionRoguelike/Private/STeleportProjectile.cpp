@@ -24,7 +24,8 @@ void ASTeleportProjectile::BeginPlay()
 
 /* Could have used AddDynamic in PostInitializeComponents to bind to the actual sphere collider's
  * OnComponentHit delegate, but since we just care about this actor in general being hit, we can
- * simply override the NotifyHit method. */
+ * simply override the NotifyHit method. This also overrides the base projectiles implementation,
+ * which calls explode immediately, but we also need to clear the timer for the teleport projectile. */
 void ASTeleportProjectile::NotifyHit(
 	class UPrimitiveComponent* MyComp,
 	AActor* Other,
@@ -42,8 +43,9 @@ void ASTeleportProjectile::NotifyHit(
 }
 
 /* Called when our projectile's lifetime has come to an end, either as a result of hitting something, 
- * or its lifetime completing. Starts the teleport timer. */
-void ASTeleportProjectile::Explode()
+ * or its lifetime completing. Starts the teleport timer. This overrides the default behaviour of
+ * the base projectile. */
+void ASTeleportProjectile::Explode_Implementation()
 {
 	/* We can't actually Destroy() yet, as we still need to wait for the explosion effect to complete
 	 * and then teleport the instigator to the current location. For this reason we must; */
@@ -53,7 +55,7 @@ void ASTeleportProjectile::Explode()
 	/* Set our visibility to false to "destroy" the projectile visually. */
 	EffectComp->SetVisibility(false);
 	/* Spawn the explosion effect */
-	UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionEffect, GetActorLocation(), GetActorRotation());
+	UGameplayStatics::SpawnEmitterAtLocation(this, ImpactEffect, GetActorLocation(), GetActorRotation());
 
 	/* Set the timer to teleport to the projectile location */
 	GetWorldTimerManager().SetTimer(TeleportWaitTimer, this, &ASTeleportProjectile::TeleportInstigator, TeleportWaitTime, false);

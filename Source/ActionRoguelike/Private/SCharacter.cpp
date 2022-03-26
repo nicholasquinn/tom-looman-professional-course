@@ -57,6 +57,17 @@ void ASCharacter::BeginPlay()
 	
 }
 
+
+void ASCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	/* Listen to events raised from our own attribute component. Considering we only
+	 * actually do anything if the health change event resulted in death, it may be 
+	 * worth creating an OnDeath event that the attribute component only raises when
+	 * the health falls below 0. */
+	AttributeComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnDeathDisableInput);
+}
+
 void ASCharacter::MoveX(float AxisValue)
 {
 	FRotator ControllerRotation = GetControlRotation();
@@ -93,6 +104,15 @@ void ASCharacter::MoveY(float AxisValue)
 	AddMovementInput(ControllerRightVector, AxisValue);
 }
 
+
+void ASCharacter::OnDeathDisableInput(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta)
+{
+	/* If we aren't alive, and we've been damaged (rather than healed) */
+	if (!AttributeComp->IsAlive() && Delta < 0.0f)
+	{
+		DisableInput(Cast<APlayerController>(GetController()));
+	}
+}
 
 void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpawn)
 {
