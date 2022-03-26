@@ -31,6 +31,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void PostInitializeComponents() override;
+
 	/* The class types for each of our different attacks */
 
 	UPROPERTY(EditAnywhere, Category="Attack")
@@ -62,6 +64,9 @@ private:
 
 	void MoveX(float AxisValue);
 	void MoveY(float AxisValue);
+
+	UFUNCTION()
+	void OnDeathDisableInput(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta);
 
 	/* This function handles the aiming and spawning of the passed in projectile. */
 	void Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpawn);
