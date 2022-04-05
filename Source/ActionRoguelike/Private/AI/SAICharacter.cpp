@@ -3,25 +3,41 @@
 
 #include "AI/SAICharacter.h"
 
+#include <AIController.h>
+#include <BehaviorTree/BlackboardComponent.h>
+#include <DrawDebugHelpers.h>
+#include <Perception/PawnSensingComponent.h>
+
+
 // Sets default values
 ASAICharacter::ASAICharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensingComp"));
 }
 
-// Called when the game starts or when spawned
-void ASAICharacter::BeginPlay()
+void ASAICharacter::PostInitializeComponents()
 {
-	Super::BeginPlay();
-	
+	Super::PostInitializeComponents();
+
+	PawnSensingComp->OnSeePawn.AddDynamic(this, &ASAICharacter::OnPawnSeen);
 }
 
-// Called every frame
-void ASAICharacter::Tick(float DeltaTime)
+/* When we see a Pawn (via the pawn sensing component), we set the blackboard key
+ * for the TargetActor to be this seen Pawn. */
+void ASAICharacter::OnPawnSeen(APawn* Pawn)
 {
-	Super::Tick(DeltaTime);
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if (AIController)
+	{
+		UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();
+		if (Blackboard)
+		{
+			/* This should probably be an FNAME member exposed via UPROPERTY at least,
+			 * and better yet would be to use a BlackboardKeySelector, and then access
+			 * the key name field, but this hard-coded way will suffice for now. */
+			Blackboard->SetValueAsObject("TargetActor", Pawn);
+		}
+	}
 
+	DrawDebugString(GetWorld(), Pawn->GetActorLocation(), TEXT("Pawn Spotted!"), nullptr, FColor::Red, 1.0f, true);
 }
-
