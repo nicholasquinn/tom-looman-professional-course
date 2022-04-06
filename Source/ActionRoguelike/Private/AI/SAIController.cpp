@@ -11,11 +11,8 @@ void ASAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	RunBehaviorTree(BehaviorTree);
-
-	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (PlayerPawn)
+	if (ensureMsgf(BehaviorTree, TEXT("Behavior tree asset not set for ASAICharacter, please assign it.")))
 	{
-		GetBlackboardComponent()->SetValueAsObject("TargetActor", PlayerPawn);
+		RunBehaviorTree(BehaviorTree);
 	}
 }
