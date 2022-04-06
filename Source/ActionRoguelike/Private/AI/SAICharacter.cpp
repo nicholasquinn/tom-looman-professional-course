@@ -30,7 +30,7 @@ void ASAICharacter::OnPawnSeen(APawn* Pawn)
 	if (AIController)
 	{
 		UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();
-		if (Blackboard)
+		if (ensureMsgf(Blackboard, TEXT("Blackboard asset not set for ASAICharacter.")))
 		{
 			/* This should probably be an FNAME member exposed via UPROPERTY at least,
 			 * and better yet would be to use a BlackboardKeySelector, and then access

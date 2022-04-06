@@ -11,5 +11,8 @@ void ASAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	RunBehaviorTree(BehaviorTree);
+	if (ensureMsgf(BehaviorTree, TEXT("Behavior tree asset not set for ASAICharacter, please assign it.")))
+	{
+		RunBehaviorTree(BehaviorTree);
+	}
 }
