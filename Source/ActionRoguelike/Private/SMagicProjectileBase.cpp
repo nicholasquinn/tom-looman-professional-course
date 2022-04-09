@@ -3,6 +3,7 @@
 
 #include "SMagicProjectileBase.h"
 
+#include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -19,10 +20,12 @@ ASMagicProjectileBase::ASMagicProjectileBase()
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Comp"));
 	MovementComp = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Movement Comp"));
 	EffectComp = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Effect Comp"));
+	InFlightAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("InFlightAudio"));
 
 	/* Setup component hierarchy */
 	RootComponent = SphereComp;
 	EffectComp->SetupAttachment(SphereComp);
+	InFlightAudio->SetupAttachment(SphereComp);
 
 	/* Initialise component members */
 
@@ -37,6 +40,9 @@ ASMagicProjectileBase::ASMagicProjectileBase()
 	MovementComp->bRotationFollowsVelocity = true;
 	/* Don't let gravity effect the path of the projectile */
 	MovementComp->ProjectileGravityScale = 0.0f;
+
+	/* Auto activate the in-flight audio component */
+	InFlightAudio->bAutoActivate = true;
 }
 
 void ASMagicProjectileBase::PostInitProperties()
@@ -71,12 +77,19 @@ void ASMagicProjectileBase::PostInitializeComponents()
 	}
 }
 
+
+void ASMagicProjectileBase::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
 void ASMagicProjectileBase::Explode_Implementation()
 {
 	if (ensure(!IsPendingKill()))
 	{
-		ensure(ImpactEffect);
+		ensure(ImpactEffect); ensure(ImpactSound);
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, GetActorLocation(), GetActorRotation());
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
 		Destroy();
 	}
 }

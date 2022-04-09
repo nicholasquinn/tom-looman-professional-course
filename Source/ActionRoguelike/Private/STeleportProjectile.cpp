@@ -56,6 +56,7 @@ void ASTeleportProjectile::Explode_Implementation()
 	EffectComp->SetVisibility(false);
 	/* Spawn the explosion effect */
 	UGameplayStatics::SpawnEmitterAtLocation(this, ImpactEffect, GetActorLocation(), GetActorRotation());
+	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
 
 	/* Set the timer to teleport to the projectile location */
 	GetWorldTimerManager().SetTimer(TeleportWaitTimer, this, &ASTeleportProjectile::TeleportInstigator, TeleportWaitTime, false);

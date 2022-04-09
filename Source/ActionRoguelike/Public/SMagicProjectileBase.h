@@ -32,25 +32,33 @@ protected:
 
 	virtual void PostInitializeComponents() override;
 
+	virtual void BeginPlay() override;
+
 	UFUNCTION(BlueprintNativeEvent)
 	void Explode();
 
 	/* The collision geometry for the projectile itself */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class USphereComponent* SphereComp;
 
 	/* The effect for the projectile itself */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UParticleSystemComponent* EffectComp;
 
 	/* The movement component that powers the projectile movement */
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
 	class UProjectileMovementComponent* MovementComp;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	class UParticleSystem* ImpactEffect;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	class UAudioComponent* InFlightAudio;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	class USoundBase* ImpactSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Flight")
 	float Speed = 1000.0f;
 
 private:	
