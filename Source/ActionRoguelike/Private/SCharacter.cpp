@@ -65,7 +65,7 @@ void ASCharacter::PostInitializeComponents()
 	 * actually do anything if the health change event resulted in death, it may be 
 	 * worth creating an OnDeath event that the attribute component only raises when
 	 * the health falls below 0. */
-	AttributeComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnDeathDisableInput);
+	AttributeComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
 }
 
 void ASCharacter::MoveX(float AxisValue)
@@ -105,12 +105,18 @@ void ASCharacter::MoveY(float AxisValue)
 }
 
 
-void ASCharacter::OnDeathDisableInput(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta)
+void ASCharacter::OnHealthChanged(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta)
 {
-	/* If we aren't alive, and we've been damaged (rather than healed) */
-	if (!AttributeComp->IsAlive() && Delta < 0.0f)
+	/* If we've been damaged (rather than healed) */
+	if (Delta < 0.0f)
 	{
-		DisableInput(Cast<APlayerController>(GetController()));
+			//->SetScalarParameterValue(FName("ParameterName"), 333.014);
+
+		/* and we've died as a result of it */
+		if (!AttributeComp->IsAlive())
+		{
+			DisableInput(Cast<APlayerController>(GetController()));
+		}
 	}
 }
 
