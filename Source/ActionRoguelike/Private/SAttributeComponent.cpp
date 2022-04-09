@@ -5,6 +5,7 @@
 
 // Sets default values for this component's properties
 USAttributeComponent::USAttributeComponent()
+	: MaxHealth{100}
 {
 	/* Sensible default for health */
 	Health = 100.0f;
@@ -14,6 +15,7 @@ USAttributeComponent::USAttributeComponent()
 bool USAttributeComponent::ApplyHealthChange(float DeltaHealth)
 {
 	Health += DeltaHealth;
+	Health = FMath::Clamp(Health, 0.0f, MaxHealth);
 
 	/* It is safe to call Broadcast on Multicast Delegates, even if no 
 	 * functions have been bound. Note that we broadcast AFTER health

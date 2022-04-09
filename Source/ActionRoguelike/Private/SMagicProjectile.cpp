@@ -45,7 +45,7 @@ void ASMagicProjectile::OnOverlapTryDamageOtherActor
 			AttributeComp->ApplyHealthChange(-Damage);
 
 			/* Can destroy this magic projectile now... */
-			Destroy();
+			Explode();
 		}
 	}
 }

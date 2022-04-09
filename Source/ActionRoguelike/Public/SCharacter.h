@@ -66,7 +66,7 @@ private:
 	void MoveY(float AxisValue);
 
 	UFUNCTION()
-	void OnDeathDisableInput(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta);
+	void OnHealthChanged(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta);
 
 	/* This function handles the aiming and spawning of the passed in projectile. */
 	void Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpawn);
@@ -113,6 +113,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components | Core")
 	class USInteractionComponent* InteractionComp;
+
+	UPROPERTY(EditAnywhere, Category = "Assets")
+	class UParticleSystem* CastEffect;
 
 	void DrawControlVsPawnRotationDebugArrows();
 

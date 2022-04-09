@@ -40,10 +40,19 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsAlive() const;
 
+	UFUNCTION(BlueprintPure)
+	float GetHealth() const { return Health; };
+
+	UFUNCTION(BlueprintPure)
+		float GetMaxHealth() const { return MaxHealth; };
+
 protected:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
 	float Health;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
+	float MaxHealth;
 
 private:	
 
