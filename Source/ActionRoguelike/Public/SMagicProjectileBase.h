@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "SMagicProjectileBase.generated.h"
 
+
 UCLASS(Abstract)
 class ACTIONROGUELIKE_API ASMagicProjectileBase : public AActor
 {
@@ -57,6 +58,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	class USoundBase* ImpactSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	TSubclassOf<class UCameraShakeBase> ImpactShake;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Flight")
 	float Speed = 1000.0f;

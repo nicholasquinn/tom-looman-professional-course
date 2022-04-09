@@ -90,6 +90,7 @@ void ASMagicProjectileBase::Explode_Implementation()
 		ensure(ImpactEffect); ensure(ImpactSound);
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, GetActorLocation(), GetActorRotation());
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+		UGameplayStatics::PlayWorldCameraShake(this, ImpactShake, GetActorLocation(), 100, 1000);
 		Destroy();
 	}
 }

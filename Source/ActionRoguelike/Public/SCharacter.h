@@ -114,6 +114,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Components | Core")
 	class USInteractionComponent* InteractionComp;
 
+	UPROPERTY(EditAnywhere, Category = "Assets")
+	class UParticleSystem* CastEffect;
+
 	void DrawControlVsPawnRotationDebugArrows();
 
 };

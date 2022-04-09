@@ -6,6 +6,7 @@
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "SAttributeComponent.h"
 #include "SInteractionComponent.h"
 
@@ -157,6 +158,10 @@ void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpaw
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	GetWorld()->SpawnActor<AActor>(ProjectileTypeToSpawn, SpawnTransform, SpawnParams);
+
+	UGameplayStatics::SpawnEmitterAttached(
+		CastEffect, GetMesh(), "Muzzle_01", GetMesh()->GetSocketLocation("Muzzle_01"), FRotator::ZeroRotator
+	);
 }
 
 /* Each <Foo>Attack function plays its corresponding animation, then sets a timer via it's corresponding
