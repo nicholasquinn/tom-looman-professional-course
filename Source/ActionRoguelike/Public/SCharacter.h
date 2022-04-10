@@ -68,6 +68,8 @@ private:
 	UFUNCTION()
 	void OnHealthChanged(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta);
 
+	void PlayAttackEffects(UAnimMontage* AttackAnim);
+
 	/* This function handles the aiming and spawning of the passed in projectile. */
 	void Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpawn);
 
@@ -116,6 +118,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Assets")
 	class UParticleSystem* CastEffect;
+
+	UPROPERTY(VisibleAnywhere, Category = "Constants")
+	FName MuzzleName;
+
+	UPROPERTY(VisibleAnywhere, Category = "Constants")
+	FName HitTimeName;
 
 	void DrawControlVsPawnRotationDebugArrows();
 

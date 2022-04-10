@@ -22,6 +22,9 @@ public:
 protected:
 
 	UFUNCTION(BlueprintNativeEvent)
+	void ConsumePowerup();
+
+	UFUNCTION(BlueprintNativeEvent)
 	void DisablePowerup();
 
 	UFUNCTION(BlueprintNativeEvent)

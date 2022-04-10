@@ -49,6 +49,10 @@ ASCharacter::ASCharacter()
 
 	/* Normalized aim direction vector gets multiplied by this scaler */
 	AimTraceDistance = 10000;
+
+	/* Set constants */
+	MuzzleName = "Muzzle_01";
+	HitTimeName = "HitTime";
 }
 
 // Called when the game starts or when spawned
@@ -111,7 +115,9 @@ void ASCharacter::OnHealthChanged(AActor* InstigatorActor, class USAttributeComp
 	/* If we've been damaged (rather than healed) */
 	if (Delta < 0.0f)
 	{
-			//->SetScalarParameterValue(FName("ParameterName"), 333.014);
+		/* It seems like both mesh types, static and skeletal, have the ability to set scalar parameter values
+		 * on their assigned materials. */
+		GetMesh()->SetScalarParameterValueOnMaterials(HitTimeName, GetWorld()->TimeSeconds);
 
 		/* and we've died as a result of it */
 		if (!AttributeComp->IsAlive())
@@ -119,6 +125,15 @@ void ASCharacter::OnHealthChanged(AActor* InstigatorActor, class USAttributeComp
 			DisableInput(Cast<APlayerController>(GetController()));
 		}
 	}
+}
+
+
+void ASCharacter::PlayAttackEffects(UAnimMontage* AttackAnim)
+{
+	PlayAnimMontage(AttackAnim);
+	UGameplayStatics::SpawnEmitterAttached(
+		CastEffect, GetMesh(), MuzzleName, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget
+	);
 }
 
 void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpawn)
@@ -149,7 +164,7 @@ void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpaw
 
 	/* Get the location of the hand socket. Sockets are added to skeletal meshes to mark positions,
 	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles */
-	const FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	const FVector HandLocation = GetMesh()->GetSocketLocation(MuzzleName);
 
 	const FTransform SpawnTransform = FTransform((TraceEnd - HandLocation).Rotation(), HandLocation);
 
@@ -158,10 +173,6 @@ void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpaw
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	GetWorld()->SpawnActor<AActor>(ProjectileTypeToSpawn, SpawnTransform, SpawnParams);
-
-	UGameplayStatics::SpawnEmitterAttached(
-		CastEffect, GetMesh(), "Muzzle_01", GetMesh()->GetSocketLocation("Muzzle_01"), FRotator::ZeroRotator
-	);
 }
 
 /* Each <Foo>Attack function plays its corresponding animation, then sets a timer via it's corresponding
@@ -169,7 +180,7 @@ void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpaw
 void ASCharacter::PrimaryAttack()
 {
 	/* play the animation asset assigned in the editor */
-	PlayAnimMontage(PrimaryAttackAnim);
+	PlayAttackEffects(PrimaryAttackAnim);
 
 	/* Set a one-shot timer that will call PrimaryAttackCallback when it expires. */
 	GetWorldTimerManager().SetTimer(PrimaryAttackTimerHandle, this, &ASCharacter::PrimaryAttackCallback, PrimaryAttackTimerDuration);
@@ -178,14 +189,14 @@ void ASCharacter::PrimaryAttack()
 /* See PrimaryAttack for explanation */
 void ASCharacter::SecondaryAttack()
 {
-	PlayAnimMontage(SecondaryAttackAnim);
+	PlayAttackEffects(SecondaryAttackAnim);
 	GetWorldTimerManager().SetTimer(SecondaryAttackTimerHandle, this, &ASCharacter::SecondaryAttackCallback, SecondaryAttackTimerDuration);
 }
 
 /* See PrimaryAttack for explanation */
 void ASCharacter::UltimateAttack()
 {
-	PlayAnimMontage(UltimateAttackAnim);
+	PlayAttackEffects(UltimateAttackAnim);
 	GetWorldTimerManager().SetTimer(UltimateAttackTimerHandle, this, &ASCharacter::UltimateAttackCallback, UltimateAttackTimerDuration);
 }
 
