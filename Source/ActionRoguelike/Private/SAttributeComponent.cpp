@@ -14,19 +14,28 @@ USAttributeComponent::USAttributeComponent()
 
 bool USAttributeComponent::ApplyHealthChange(float DeltaHealth)
 {
-	Health += DeltaHealth;
-	Health = FMath::Clamp(Health, 0.0f, MaxHealth);
+	const float OldHealth = Health;
+	Health = FMath::Clamp(Health += DeltaHealth, 0.0f, MaxHealth);
+	/* The true health difference is the difference between where we are now,
+	 * and where we were before. */
+	const float TrueDelta = Health - OldHealth;
 
 	/* It is safe to call Broadcast on Multicast Delegates, even if no 
 	 * functions have been bound. Note that we broadcast AFTER health
 	 * has been updated, which is expected by anyone who binds to this. */
-	OnHealthChanged.Broadcast(nullptr, this, Health, DeltaHealth);
+	OnHealthChanged.Broadcast(nullptr, this, Health, TrueDelta);
 
-	/* For now, just return whether they are still alive */
-	return Health > 0.0f;
+	/* Now we know the true delta, we can return whether we were 
+	 * actually healed or damaged */
+	return TrueDelta != 0.0f;
 }
 
 bool USAttributeComponent::IsAlive() const
 {
 	return Health > 0.0f;
+}
+
+bool USAttributeComponent::IsFullHealth() const
+{
+	return Health == MaxHealth;
 }

@@ -44,7 +44,10 @@ public:
 	float GetHealth() const { return Health; };
 
 	UFUNCTION(BlueprintPure)
-		float GetMaxHealth() const { return MaxHealth; };
+	float GetMaxHealth() const { return MaxHealth; };
+
+	UFUNCTION(BlueprintPure)
+	bool IsFullHealth() const;
 
 protected:
 

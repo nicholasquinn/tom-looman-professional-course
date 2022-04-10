@@ -43,6 +43,10 @@ ASMagicProjectileBase::ASMagicProjectileBase()
 
 	/* Auto activate the in-flight audio component */
 	InFlightAudio->bAutoActivate = true;
+
+	/* Camera shake radius */
+	ImpactShakeInnerRadius = 100;
+	ImpactShakeOuterRadius = 1000;
 }
 
 void ASMagicProjectileBase::PostInitProperties()
@@ -90,7 +94,7 @@ void ASMagicProjectileBase::Explode_Implementation()
 		ensure(ImpactEffect); ensure(ImpactSound);
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, GetActorLocation(), GetActorRotation());
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
-		UGameplayStatics::PlayWorldCameraShake(this, ImpactShake, GetActorLocation(), 100, 1000);
+		UGameplayStatics::PlayWorldCameraShake(this, ImpactShake, GetActorLocation(), ImpactShakeInnerRadius, ImpactShakeOuterRadius);
 		Destroy();
 	}
 }
