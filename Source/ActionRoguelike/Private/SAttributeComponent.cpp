@@ -12,7 +12,7 @@ USAttributeComponent::USAttributeComponent()
 }
 
 
-bool USAttributeComponent::ApplyHealthChange(float DeltaHealth)
+bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth)
 {
 	const float OldHealth = Health;
 	Health = FMath::Clamp(Health += DeltaHealth, 0.0f, MaxHealth);
@@ -23,7 +23,7 @@ bool USAttributeComponent::ApplyHealthChange(float DeltaHealth)
 	/* It is safe to call Broadcast on Multicast Delegates, even if no 
 	 * functions have been bound. Note that we broadcast AFTER health
 	 * has been updated, which is expected by anyone who binds to this. */
-	OnHealthChanged.Broadcast(nullptr, this, Health, TrueDelta);
+	OnHealthChanged.Broadcast(InstigatorActor, this, Health, TrueDelta);
 
 	/* Now we know the true delta, we can return whether we were 
 	 * actually healed or damaged */

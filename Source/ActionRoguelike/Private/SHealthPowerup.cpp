@@ -36,5 +36,5 @@ void ASHealthPowerup::Interact_Implementation(APawn* InstigatorPawn)
 	 * we don't just set health directly, it should always be set by the attribute
 	 * component itself. It's the responsibility of the attribute component, who 
 	 * own the health, to update the health. */
-	AttributeComp->ApplyHealthChange(HealAmount);
+	AttributeComp->ApplyHealthChange(this, HealAmount);
 }

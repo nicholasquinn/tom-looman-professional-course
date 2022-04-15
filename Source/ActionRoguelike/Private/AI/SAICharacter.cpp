@@ -38,24 +38,20 @@ void ASAICharacter::PostInitializeComponents()
  * for the TargetActor to be this seen Pawn. */
 void ASAICharacter::OnPawnSeen(APawn* Pawn)
 {
-	AAIController* AIController = Cast<AAIController>(GetController());
-	if (AIController)
-	{
-		UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();
-		if (ensureMsgf(Blackboard, TEXT("Blackboard asset not set for ASAICharacter.")))
-		{
-			/* This should probably be an FNAME member exposed via UPROPERTY at least,
-			 * and better yet would be to use a BlackboardKeySelector, and then access
-			 * the key name field, but this hard-coded way will suffice for now. */
-			Blackboard->SetValueAsObject("TargetActor", Pawn);
-		}
-	}
-
+	SetTargetActor(Pawn);
 	DrawDebugString(GetWorld(), Pawn->GetActorLocation(), TEXT("Pawn Spotted!"), nullptr, FColor::Red, 1.0f, true);
 }
 
 void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComponent, float NewHealth, float Delta)
 {
+	/* If our health was changed by anything that isn't us, and it was a damaging event */
+	if (InstigatorActor != this && Delta < 0.0f)
+	{
+		SetTargetActor(InstigatorActor);
+	}
+
+	/* --- ON DEATH --- */
+
 	/* This is the actual/real delta that is sent to us in the delegate, so it will be strictly less than 0 if we really have
 	 * taken damage. So, if we have taken damage and our health is < 0, then this is the instance of the event that we have
 	 * died on (subsequent hits will have Delta == 0). Note that it's probably a better design to have this logic in the 
@@ -86,5 +82,21 @@ void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponen
 		 * then the bot would disappear instantly as soon as it reaches 0HP, and we wouldn't see the rag doll happpen.
 		 * SetLifeSpan simply sets a timer for the given duration and then calls Destroy. */
 		SetLifeSpan(10);
+	}
+}
+
+void ASAICharacter::SetTargetActor(AActor* NewTarget)
+{
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if (AIController)
+	{
+		UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();
+		if (ensureMsgf(Blackboard, TEXT("Blackboard asset not set for ASAICharacter.")))
+		{
+			/* This string should probably be an FNAME member exposed via UPROPERTY at least,
+			 * and better yet would be to use a BlackboardKeySelector, and then access
+			 * the key name field, but this hard-coded way will suffice for now. */
+			Blackboard->SetValueAsObject("TargetActor", NewTarget);
+		}
 	}
 }

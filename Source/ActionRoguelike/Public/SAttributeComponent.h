@@ -23,7 +23,7 @@ public:
 	USAttributeComponent();
 
 	UFUNCTION(BlueprintCallable, Category="Attributes")
-	bool ApplyHealthChange(float DeltaHealth);
+	bool ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth);
 
 	/* This is an actual instance of the FOnHealthChanged delegate/event/broadcaster
 	 * to which we can bind to via blueprints. Even if it was in the protected
