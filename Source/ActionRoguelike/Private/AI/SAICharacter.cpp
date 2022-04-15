@@ -87,7 +87,7 @@ void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponen
 
 void ASAICharacter::SetTargetActor(AActor* NewTarget)
 {
-	AAIController* AIController = Cast<AAIController>(GetController());
+	AAIController* AIController = GetController<AAIController>();
 	if (AIController)
 	{
 		UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();

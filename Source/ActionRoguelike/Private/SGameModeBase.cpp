@@ -50,8 +50,9 @@ void ASGameModeBase::SpawnBotTimerElapsed()
 	for (TActorIterator<ASAICharacter> It(GetWorld()); It; ++It)
 	{
 		ASAICharacter* CurrBot = *It;
+		/* Use the static helper function instead of doing a cast+getcomponentbyclass here manually */
 		USAttributeComponent* AttributeComp
-			= Cast<USAttributeComponent>(CurrBot->GetComponentByClass(USAttributeComponent::StaticClass()));
+			= USAttributeComponent::GetAttributeComponent(CurrBot);
 
 		if (ensure(AttributeComp) && AttributeComp->IsAlive())
 		{

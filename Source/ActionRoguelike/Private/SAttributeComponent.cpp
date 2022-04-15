@@ -39,3 +39,23 @@ bool USAttributeComponent::IsFullHealth() const
 {
 	return Health == MaxHealth;
 }
+
+USAttributeComponent* USAttributeComponent::GetAttributeComponent(AActor* FromActor)
+{
+	/* IsValid is a helper function for not null and not pending kill */
+	return IsValid(FromActor) 
+		? Cast<USAttributeComponent>(FromActor->GetComponentByClass(USAttributeComponent::StaticClass()))
+		: nullptr;
+}
+
+bool USAttributeComponent::IsActorAlive(AActor* FromActor)
+{
+	USAttributeComponent* AttributeComp = USAttributeComponent::GetAttributeComponent(FromActor);
+	if (AttributeComp)
+	{
+		return AttributeComp->IsAlive();
+	}
+	UE_LOG(LogTemp, Warning, TEXT("The supplied actor does not have a attribute component. Therefore returning false for IsAlive."))
+	ensure(nullptr); // purposefully want to pause execution here!
+	return false;
+}
