@@ -24,6 +24,8 @@ ASAICharacter::ASAICharacter()
 	 * level or spawned at runtime. Of course, if this character is possessed by a Player Controller
 	 * than this is irrelevant. */
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+	HitTimeName = "HitTime";
 }
 
 void ASAICharacter::PostInitializeComponents()
@@ -48,6 +50,7 @@ void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponen
 	if (InstigatorActor != this && Delta < 0.0f)
 	{
 		SetTargetActor(InstigatorActor);
+		GetMesh()->SetScalarParameterValueOnMaterials(HitTimeName, GetWorld()->TimeSeconds);
 	}
 
 	/* --- ON DEATH --- */

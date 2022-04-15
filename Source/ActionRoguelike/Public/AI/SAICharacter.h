@@ -32,6 +32,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USAttributeComponent* AttributeComp;
 
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName HitTimeName;
+
 	UFUNCTION()
 	void OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComponent, float NewHealth, float Delta);
 
