@@ -19,11 +19,33 @@ class ACTIONROGUELIKE_API USAttributeComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
+
+	/* Static functions */
+
+	/* The fact that we're passing a class reference to a static function may seem
+	 * weird at first, you may be thinking, just make it a member function if you're
+	 * passing an instance. However, the reason we do this is because we don't actually
+	 * know whether it has an attributes component, and so we call getcomponentbyclass
+	 * cast and return. It's basically a helper to not have to type that out. The 
+	 * alternative to doing this static function is to create a small interface that
+	 * has a GetAttributeComp method on it, and then any actor that has an attribute
+	 * comp should implement that interface to return its attribute comp. */
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	static USAttributeComponent* GetAttributeComponent(AActor* FromActor);
+
+	/* IMO this function is plain bad as we have to return something in the case that
+	 * FromActor doesn't have an attributes component, and there's no objectively 
+	 * correct answer about whether we should return true (alive) or false (dead)
+	 * for such actors. I'm only adding it because Tom added it to the course and so
+	 * we may need it in later classes. */
+	UFUNCTION(BlueprintCallable, Category = "Attributes", meta=(DisplayName="IsAlive"))
+	static bool IsActorAlive(AActor* FromActor);
+
 	// Sets default values for this component's properties
 	USAttributeComponent();
 
 	UFUNCTION(BlueprintCallable, Category="Attributes")
-	bool ApplyHealthChange(float DeltaHealth);
+	bool ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth);
 
 	/* This is an actual instance of the FOnHealthChanged delegate/event/broadcaster
 	 * to which we can bind to via blueprints. Even if it was in the protected

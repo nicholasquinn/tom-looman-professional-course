@@ -12,7 +12,7 @@ USAttributeComponent::USAttributeComponent()
 }
 
 
-bool USAttributeComponent::ApplyHealthChange(float DeltaHealth)
+bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth)
 {
 	const float OldHealth = Health;
 	Health = FMath::Clamp(Health += DeltaHealth, 0.0f, MaxHealth);
@@ -23,7 +23,7 @@ bool USAttributeComponent::ApplyHealthChange(float DeltaHealth)
 	/* It is safe to call Broadcast on Multicast Delegates, even if no 
 	 * functions have been bound. Note that we broadcast AFTER health
 	 * has been updated, which is expected by anyone who binds to this. */
-	OnHealthChanged.Broadcast(nullptr, this, Health, TrueDelta);
+	OnHealthChanged.Broadcast(InstigatorActor, this, Health, TrueDelta);
 
 	/* Now we know the true delta, we can return whether we were 
 	 * actually healed or damaged */
@@ -38,4 +38,24 @@ bool USAttributeComponent::IsAlive() const
 bool USAttributeComponent::IsFullHealth() const
 {
 	return Health == MaxHealth;
+}
+
+USAttributeComponent* USAttributeComponent::GetAttributeComponent(AActor* FromActor)
+{
+	/* IsValid is a helper function for not null and not pending kill */
+	return IsValid(FromActor) 
+		? Cast<USAttributeComponent>(FromActor->GetComponentByClass(USAttributeComponent::StaticClass()))
+		: nullptr;
+}
+
+bool USAttributeComponent::IsActorAlive(AActor* FromActor)
+{
+	USAttributeComponent* AttributeComp = USAttributeComponent::GetAttributeComponent(FromActor);
+	if (AttributeComp)
+	{
+		return AttributeComp->IsAlive();
+	}
+	UE_LOG(LogTemp, Warning, TEXT("The supplied actor does not have a attribute component. Therefore returning false for IsAlive."))
+	ensure(nullptr); // purposefully want to pause execution here!
+	return false;
 }

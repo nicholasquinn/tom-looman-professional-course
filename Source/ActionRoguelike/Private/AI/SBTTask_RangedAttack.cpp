@@ -3,11 +3,18 @@
 
 #include "AI/SBTTask_RangedAttack.h"
 
+#include "SAttributeComponent.h"
+
 #include "AIController.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Character.h"
 
+
+USBTTask_RangedAttack::USBTTask_RangedAttack()
+{
+	MaxBulletSpreadDegrees = 5.0f;
+}
 
 /* Spawn a projectile aimed towards the target actor. */
 EBTNodeResult::Type USBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -19,6 +26,12 @@ EBTNodeResult::Type USBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& O
 	/* Get the target actor key from the blackboard */
 	AActor* TargetActor = Cast<AActor>(Blackboard->GetValueAsObject("TargetActor"));
 	if (!ensure(TargetActor)) return EBTNodeResult::Failed;
+
+	/* If the target actor is not alive, then we don't want to target them anymore.
+	 * Note that we do not, and should not, set the target actor blackboard key to nullptr.
+	 * That is not our responsibility as a BB Task. We just say what the result of the 
+	 * task is e.g. success, fail etc.*/
+	if (!USAttributeComponent::IsActorAlive(TargetActor)) { return EBTNodeResult::Failed; }
 
 	/* Get the pawn who owns this blackboard/behavior tree, via the AIController */
 	AAIController* AIController = OwnerComp.GetAIOwner();
@@ -32,7 +45,14 @@ EBTNodeResult::Type USBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& O
 	const FVector TargetActorLocation = TargetActor->GetActorLocation();
 
 	/* Destination - Start to get direction vector, then take rotation of it */
-	const FRotator MuzzleRotation = (TargetActorLocation - MuzzleLocation).Rotation();
+	FRotator MuzzleRotation = (TargetActorLocation - MuzzleLocation).Rotation();
+
+	/* Add some random deviation from perfect aim, so it's possible for the bots to miss. Note that
+	 * roll doesn't need to be adjust, as that will just roll the projectile which has no effect. Also
+	 * note that we don't allow the bot to shoot downwards of the player, only directly at the same height
+	 * or above. This just seems a little more realistic. */
+	MuzzleRotation.Pitch += FMath::RandRange(0.0f, MaxBulletSpreadDegrees);
+	MuzzleRotation.Yaw += FMath::RandRange(-MaxBulletSpreadDegrees, MaxBulletSpreadDegrees);
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Instigator = AICharacter;

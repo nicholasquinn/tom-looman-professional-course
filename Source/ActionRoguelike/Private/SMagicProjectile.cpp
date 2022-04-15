@@ -42,7 +42,7 @@ void ASMagicProjectile::OnOverlapTryDamageOtherActor
 		if (USAttributeComponent* AttributeComp = Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass())))
 		{
 			/* Decrease the health of the OtherActor by the amount of damage this projectile is supposed to do. */
-			AttributeComp->ApplyHealthChange(-Damage);
+			AttributeComp->ApplyHealthChange(GetInstigator(), -Damage);
 
 			/* Can destroy this magic projectile now... */
 			Explode();

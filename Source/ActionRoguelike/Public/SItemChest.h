@@ -19,16 +19,11 @@ public:
 	// Sets default values for this actor's properties
 	ASItemChest();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 	/* Public, as it reflects the same access level as the Interact declaration.
 	 * Other Actors need to be able to call Interact on this actor to interact with it. */
 	void Interact_Implementation(APawn* InstigatorPawn);
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* BaseMesh;
