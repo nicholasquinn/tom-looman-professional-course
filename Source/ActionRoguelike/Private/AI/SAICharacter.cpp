@@ -13,6 +13,11 @@
 ASAICharacter::ASAICharacter()
 {
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensingComp"));
+
+	/* Will be possessed by an AI controller regardless of whether it was pre-placed into the
+	 * level or spawned at runtime. Of course, if this character is possessed by a Player Controller
+	 * than this is irrelevant. */
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 void ASAICharacter::PostInitializeComponents()
