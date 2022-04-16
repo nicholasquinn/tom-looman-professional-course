@@ -270,3 +270,8 @@ void ASCharacter::DrawControlVsPawnRotationDebugArrows()
 	DrawDebugDirectionalArrow(GetWorld(), LineStart, ControllerDirection_LineEnd, DrawScale, FColor::Green, false, 0.0f, 0, Thickness);
 }
 
+void ASCharacter::AddHealth(float Amount /*= 100*/)
+{
+	AttributeComp->ApplyHealthChange(this, Amount);
+}
+

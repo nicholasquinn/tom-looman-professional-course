@@ -100,3 +100,17 @@ void ASGameModeBase::OnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Quer
 	DrawDebugSphere(GetWorld(), Locations[0], 25, 8, FColor::Green, false, BotSpawnInterval);
 
 }
+
+void ASGameModeBase::KillAI()
+{
+	for (TActorIterator<ASAICharacter> It(GetWorld()); It; ++It)
+	{
+		ASAICharacter* CurrBot = *It;
+		/* Use the static helper function instead of doing a cast+getcomponentbyclass here manually */
+		USAttributeComponent* AttributeComp
+			= USAttributeComponent::GetAttributeComponent(CurrBot);
+
+		/* Ignoring the result of Kill, don't care if it fails because that means they are already dead. */
+		AttributeComp->Kill(this); // TODO: maybe pass in player controller as instigator to get credits?
+	}
+}
