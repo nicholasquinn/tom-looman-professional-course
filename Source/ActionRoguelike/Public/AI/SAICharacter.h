@@ -35,6 +35,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Effects")
 	FName HitTimeName;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> HealthBarWidgetClass;
+
+	class USWorldUserWidget* HealthBarWidget;
+
 	UFUNCTION()
 	void OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComponent, float NewHealth, float Delta);
 

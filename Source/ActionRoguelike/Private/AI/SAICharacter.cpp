@@ -12,6 +12,7 @@
 #include <BrainComponent.h>
 #include <DrawDebugHelpers.h>
 #include <Perception/PawnSensingComponent.h>
+#include "SWorldUserWidget.h"
 
 
 // Sets default values
@@ -53,6 +54,27 @@ void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponen
 		GetMesh()->SetScalarParameterValueOnMaterials(HitTimeName, GetWorld()->TimeSeconds);
 	}
 
+	/* If our health was changed in any way */
+	if (Delta != 0.0f)
+	{
+		/* Create the health bar widget only on the first time health changes */
+		if (!HealthBarWidget)
+		{
+			/* Create widget can only be used to create UserWidget types, and the OwningObject (first param) must be
+			 * one of the following types: UWidgetTree, APlayerController, UGameInstance, or UWorld. UWorld is usually
+			 * the easiest to pass in. */
+			HealthBarWidget = CreateWidget<USWorldUserWidget>(GetWorld(), HealthBarWidgetClass);
+			if (HealthBarWidget)
+			{
+				/* Since adding the widget to the viewport will cause its OnConstruct event to run, we must
+				 * set the OwningActor property before adding to viewport, since we intend to use it in
+				 * OnConstruct. */
+				HealthBarWidget->OwningActor = this;
+				HealthBarWidget->AddToViewport();
+			}
+		}
+	}
+
 	/* --- ON DEATH --- */
 
 	/* This is the actual/real delta that is sent to us in the delegate, so it will be strictly less than 0 if we really have
@@ -61,6 +83,16 @@ void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponen
 	 * attribute component and have a second event, OnDeath, that does the below logic and raises the event in that case. */
 	if (Delta < 0.0f && NewHealth <= 0.0f)
 	{
+		/* Remove health bar from the viewport. This could have also been done in the blueprint derived class (WorldWBP_AiHealthBar)
+		 * in the OnHealthChanged event blueprint graph, but then other types of UWorldUserWidget would also be responsible for doing
+		 * the same thing. It's assumed all types of widget will want to be deleted once the AI is dead, so we do both construction 
+		 * (see above) and deletion (see below) in C++, and just let the blueprint subclasses implement the custom behavior in their
+		 * BP Graphs. */
+		if (HealthBarWidget)
+		{
+			HealthBarWidget->RemoveFromParent();
+		}
+
 		// We just died so stop AI logic if it's present
 		AAIController* AIC = Cast<AAIController>(GetController());
 		if (ensure(AIC))
