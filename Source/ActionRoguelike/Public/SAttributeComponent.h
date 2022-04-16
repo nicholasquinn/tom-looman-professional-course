@@ -71,6 +71,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsFullHealth() const;
 
+	UFUNCTION(BlueprintCallable)
+	bool Kill(AActor* InstigatorActor);
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")

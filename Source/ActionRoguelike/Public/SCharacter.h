@@ -127,4 +127,8 @@ private:
 
 	void DrawControlVsPawnRotationDebugArrows();
 
+public: /* Additional public section specifically for exec functions*/
+
+	UFUNCTION(Exec)
+	void AddHealth(float Amount = 100);
 };

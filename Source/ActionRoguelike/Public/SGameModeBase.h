@@ -49,4 +49,9 @@ protected:
 private:
 
 
+public: /* exec functions */
+
+	UFUNCTION(Exec)
+	void KillAI();
+
 };

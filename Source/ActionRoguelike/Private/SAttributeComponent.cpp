@@ -14,6 +14,16 @@ USAttributeComponent::USAttributeComponent()
 
 bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth)
 {
+	/* Check if the owning actor is currently invincible. Note that the "God" command will set
+	 * bCanBeDamaged to false in the Pawn possessed by the PC. Note however, that because
+	 * God is an Exec command, it will not effect AI characters, as they are not possessed by
+	 * a PC. This means turning god mode on will allow us to still damage AI, regardless of
+	 * the code below. */
+	if (!GetOwner()->CanBeDamaged())
+	{
+		return false;
+	}
+
 	const float OldHealth = Health;
 	Health = FMath::Clamp(Health += DeltaHealth, 0.0f, MaxHealth);
 	/* The true health difference is the difference between where we are now,
@@ -38,6 +48,12 @@ bool USAttributeComponent::IsAlive() const
 bool USAttributeComponent::IsFullHealth() const
 {
 	return Health == MaxHealth;
+}
+
+bool USAttributeComponent::Kill(AActor* InstigatorActor)
+{
+	/* It may already be dead */
+	return ApplyHealthChange(InstigatorActor, -MaxHealth);
 }
 
 USAttributeComponent* USAttributeComponent::GetAttributeComponent(AActor* FromActor)
