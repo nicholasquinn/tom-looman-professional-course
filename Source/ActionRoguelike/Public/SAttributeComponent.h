@@ -71,6 +71,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsFullHealth() const;
 
+	UFUNCTION(BlueprintPure)
+	bool IsLowHealth() const;
+
 	UFUNCTION(BlueprintCallable)
 	bool Kill(AActor* InstigatorActor);
 
@@ -81,6 +84,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
 	float MaxHealth;
+
+	/* May want different entities to have different thresholds e.g. for execution etc. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attributes|Health")
+	float LowHealthThreshold;
 
 private:	
 

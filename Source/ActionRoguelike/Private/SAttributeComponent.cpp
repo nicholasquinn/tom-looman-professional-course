@@ -6,9 +6,9 @@
 // Sets default values for this component's properties
 USAttributeComponent::USAttributeComponent()
 	: MaxHealth{100}
+	, Health{100}
+	, LowHealthThreshold{50}
 {
-	/* Sensible default for health */
-	Health = 100.0f;
 }
 
 
@@ -48,6 +48,11 @@ bool USAttributeComponent::IsAlive() const
 bool USAttributeComponent::IsFullHealth() const
 {
 	return Health == MaxHealth;
+}
+
+bool USAttributeComponent::IsLowHealth() const
+{
+	return Health <= LowHealthThreshold;
 }
 
 bool USAttributeComponent::Kill(AActor* InstigatorActor)
