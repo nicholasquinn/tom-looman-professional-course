@@ -2,6 +2,7 @@
 
 
 #include "SAttributeComponent.h"
+#include "SGameModeBase.h"
 
 // Sets default values for this component's properties
 USAttributeComponent::USAttributeComponent()
@@ -34,6 +35,18 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 	 * functions have been bound. Note that we broadcast AFTER health
 	 * has been updated, which is expected by anyone who binds to this. */
 	OnHealthChanged.Broadcast(InstigatorActor, this, Health, TrueDelta);
+
+	/* If we are at or below 0HP, and we just took damage (negative delta), we are dead */
+	if (Health <= 0.0f && TrueDelta < 0.0f)
+	{
+		/* The attribute component now depends on the ASGameMode. Is there a better
+		 * way of doing this? */
+		ASGameModeBase* GameMode = GetWorld()->GetAuthGameMode<ASGameModeBase>();
+		if (GameMode)
+		{
+			GameMode->OnActorKilled(GetOwner(), InstigatorActor);
+		}
+	}
 
 	/* Now we know the true delta, we can return whether we were 
 	 * actually healed or damaged */

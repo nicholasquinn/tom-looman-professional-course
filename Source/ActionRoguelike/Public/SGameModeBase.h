@@ -21,6 +21,8 @@ public:
 
 	virtual void StartPlay() override;
 
+	virtual void OnActorKilled(AActor* Victim, AActor* Killer);
+
 protected:
 
 	FTimerHandle SpawnBotTimerHandle;
@@ -47,6 +49,9 @@ protected:
 	TSubclassOf<AActor> MinionAiClass;
 
 private:
+
+	UFUNCTION()
+	void RespawnPlayerElapsed(AController* Controller);
 
 
 public: /* exec functions */
