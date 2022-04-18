@@ -2,8 +2,14 @@
 
 
 #include "AI/SBTService_CheckLowHealth.h"
-#include "BehaviorTree/BlackboardComponent.h"
+
 #include "SAttributeComponent.h"
+
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
+#include "BrainComponent.h"
+
 
 void USBTService_CheckLowHealth::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
@@ -17,8 +23,11 @@ void USBTService_CheckLowHealth::TickNode(UBehaviorTreeComponent& OwnerComp, uin
 	/* It is expected that we have a blackboard assigned to our behavior tree... */
 	if (!ensure(Blackboard)) { return; }
 
-	AActor* SelfActor = Cast<AActor>(Blackboard->GetValueAsObject(SelfKeySelector.SelectedKeyName));
-	USAttributeComponent* AttributeComp = USAttributeComponent::GetAttributeComponent(SelfActor);
+	/* Rather than use the SelfActor key method here, we will get the pawn that the BT is for (via
+	 * going to the AI Controller that started this BT, then from that AI controller we can get the
+	 * Pawn it is controlling. */
+	APawn* AIPawn = Cast<APawn>(OwnerComp.GetAIOwner()->GetPawn());
+	USAttributeComponent* AttributeComp = USAttributeComponent::GetAttributeComponent(AIPawn);
 	/* It is expected that we would only be using this service when the self actor does have an
 	 * an AttributeComponent, so we want to be made aware if it does not have one. */
 	if (!ensure(AttributeComp)) { return; }

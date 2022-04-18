@@ -22,9 +22,6 @@ protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 	UPROPERTY(EditAnywhere)
-	FBlackboardKeySelector SelfKeySelector;
-
-	UPROPERTY(EditAnywhere)
 	FBlackboardKeySelector IsLowHealthKeySelector;
 
 private:
