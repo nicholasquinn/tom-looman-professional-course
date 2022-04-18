@@ -71,6 +71,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsFullHealth() const;
 
+	UFUNCTION(BlueprintPure)
+	bool IsLowHealth() const;
+
 	UFUNCTION(BlueprintCallable)
 	bool Kill(AActor* InstigatorActor);
 
@@ -81,6 +84,16 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
 	float MaxHealth;
+
+	/* May want different entities to have different thresholds e.g. for execution etc.
+	 * ClampMax and ClampMin force numbers entered into the property to be clamped within the specified range.
+	 * In comparison, UIMax and UIMin stop the number from going outside the bounds when the user drags their mouse,
+	 * but still allows them to type in a number outside the UIMin/UIMax range. */
+	UPROPERTY(
+		EditAnywhere, BlueprintReadOnly, Category = "Attributes|Health", 
+		meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0")
+	)
+	float LowHealthThreshold;
 
 private:	
 
