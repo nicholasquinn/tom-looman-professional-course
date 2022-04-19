@@ -6,6 +6,7 @@
 // My files
 #include "AI/SAICharacter.h"
 #include "SAttributeComponent.h"
+#include "SCharacter.h"
 
 // UE files
 #include "DrawDebugHelpers.h"
@@ -13,6 +14,13 @@
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 
+
+static TAutoConsoleVariable<bool> CVar_SpawnBots(
+	TEXT("su.SpawnBots"),
+	true,
+	TEXT("Determines whether bots will spawn or not."),
+	ECVF_Cheat /* Enum Console Variable Flags :: Cheat */
+);
 
 ASGameModeBase::ASGameModeBase()
 {
@@ -26,8 +34,34 @@ void ASGameModeBase::StartPlay()
 	GetWorldTimerManager().SetTimer(SpawnBotTimerHandle, this, &ASGameModeBase::SpawnBotTimerElapsed, BotSpawnInterval, true);
 }
 
+void ASGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
+{
+	/* If it's a player that has died */
+	if (ASCharacter* SCharacter = Cast<ASCharacter>(Victim))
+	{
+		/* Local timer handle because if it was a member, then if two players died straight after
+		 * one another, the second setting of this timer handle would cause the first to prematurely
+		 * expire. Of course, it being local means we lose the reference to it, so we cannot stop
+		 * this timer manually, we always have to wait for it to timeout. */
+		FTimerHandle PlayerRespawnTimerHandle;
+		FTimerDelegate RespawnPlayerDelegate;
+		RespawnPlayerDelegate.BindUFunction(this, "RespawnPlayerElapsed", SCharacter->GetController());
+		float RespawnTimerDuration = 2.0f; // TODO: expose as tweakable property
+		GetWorldTimerManager().SetTimer(PlayerRespawnTimerHandle, RespawnPlayerDelegate, RespawnTimerDuration, false);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("%s was killed by %s"), *GetNameSafe(Victim), *GetNameSafe(Killer));
+}
+
 void ASGameModeBase::SpawnBotTimerElapsed()
 {
+	/* If we have disabled spawning bots, skip spawning the bot! */
+	if (!CVar_SpawnBots.GetValueOnGameThread()) 
+	{ 
+		UE_LOG(LogTemp, Warning, TEXT("Spawning bots has been disabled."));
+		return; 
+	}
+
 	/* Moved checking of number of bots spawned to here because it's more efficient to
 	 * check whether we can even spawn one before even attempting to run the EQS which
 	 * is expensive. */
@@ -99,6 +133,17 @@ void ASGameModeBase::OnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Quer
 	GetWorld()->SpawnActor<AActor>(MinionAiClass, Locations[0], FRotator::ZeroRotator, ActorSpawnParams);
 	DrawDebugSphere(GetWorld(), Locations[0], 25, 8, FColor::Green, false, BotSpawnInterval);
 
+}
+
+void ASGameModeBase::RespawnPlayerElapsed(AController* Controller)
+{
+	if (ensure(Controller))
+	{
+		/* If the player controller already has a Pawn then it will re-use it. We don't want to
+		 * do this, so unpossess the current pawn so we get a brand new one. */
+		Controller->UnPossess();
+		RestartPlayer(Controller);
+	}
 }
 
 void ASGameModeBase::KillAI()

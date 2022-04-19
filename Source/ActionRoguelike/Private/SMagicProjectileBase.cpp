@@ -31,6 +31,7 @@ ASMagicProjectileBase::ASMagicProjectileBase()
 
 	/* Set all collision settings to the projectile preset */
 	SphereComp->SetCollisionProfileName(FName("Projectile"));
+	SphereComp->SetSphereRadius(10);
 
 	/* initial speed, overrides initial velocity (which then is interpreted as initial direction) */
 	MovementComp->InitialSpeed = Speed = 1000.0f;

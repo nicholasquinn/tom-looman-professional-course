@@ -8,6 +8,7 @@
 
 /* Engine headers */
 #include <Components/SphereComponent.h>
+#include "SGameplayFunctionLibrary.h"
 
 
 
@@ -37,15 +38,21 @@ void ASMagicProjectile::OnOverlapTryDamageOtherActor
 {
 	/* We can only damage the other actor if it isn't null (obviously), and if it isn't null, 
 	 * we also don't want to damage the person who fired the projectile. */
-	if (OtherActor && OtherActor != GetInstigator())
-	{
-		if (USAttributeComponent* AttributeComp = Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass())))
-		{
-			/* Decrease the health of the OtherActor by the amount of damage this projectile is supposed to do. */
-			AttributeComp->ApplyHealthChange(GetInstigator(), -Damage);
+	//if (OtherActor && OtherActor != GetInstigator())
+	//{
+	//	if (USAttributeComponent* AttributeComp = Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass())))
+	//	{
+	//		/* Decrease the health of the OtherActor by the amount of damage this projectile is supposed to do. */
+	//		AttributeComp->ApplyHealthChange(GetInstigator(), -Damage);
 
-			/* Can destroy this magic projectile now... */
-			Explode();
-		}
+	//		/* Can destroy this magic projectile now... */
+	//		Explode();
+	//	}
+	//}
+
+	/* New implementation using the GameplayFunctionLibrary */
+	if (USGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, Damage, SweepResult))
+	{
+		Explode();
 	}
 }

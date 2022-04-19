@@ -46,6 +46,7 @@ EBTNodeResult::Type USBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& O
 
 	/* Destination - Start to get direction vector, then take rotation of it */
 	FRotator MuzzleRotation = (TargetActorLocation - MuzzleLocation).Rotation();
+	const FVector BarrelOffset = MuzzleRotation.Vector().GetSafeNormal() * 100;
 
 	/* Add some random deviation from perfect aim, so it's possible for the bots to miss. Note that
 	 * roll doesn't need to be adjust, as that will just roll the projectile which has no effect. Also
@@ -56,6 +57,7 @@ EBTNodeResult::Type USBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& O
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Instigator = AICharacter;
-	return GetWorld()->SpawnActor<AActor>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams)
+	
+	return GetWorld()->SpawnActor<AActor>(ProjectileClass, MuzzleLocation + BarrelOffset, MuzzleRotation, SpawnParams)
 		? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }

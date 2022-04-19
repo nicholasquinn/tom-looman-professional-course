@@ -13,6 +13,9 @@
 #include <DrawDebugHelpers.h>
 #include <Perception/PawnSensingComponent.h>
 #include "SWorldUserWidget.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 
 
 // Sets default values
@@ -20,6 +23,12 @@ ASAICharacter::ASAICharacter()
 {
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensingComp"));
 	AttributeComp = CreateDefaultSubobject<USAttributeComponent>(TEXT("AttributeComp"));
+
+	/* Temporary fix to let magic projectile hit the mesh rather than the capsule component.
+	 * The projectile should really have its own object type, rather than using world dynamic,
+	 * that's too general. */
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
+	GetMesh()->SetGenerateOverlapEvents(true);
 
 	/* Will be possessed by an AI controller regardless of whether it was pre-placed into the
 	 * level or spawned at runtime. Of course, if this character is possessed by a Player Controller
@@ -112,6 +121,13 @@ void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponen
 		 * and we actually have to tell the skeletal mesh to use physics rather than an animation. */ 
 		GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 		GetMesh()->SetAllBodiesSimulatePhysics(true);
+
+		/* Also disable collision, otherwise capsule component is left standing in the world and can block player,
+		 * camera, or projectiles etc. */
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		/* And now that we have no collision enabled, the character movement component will think we are in the air,
+		 * and thus try to apply gravity. To prevent this, disable movement from it. */
+		GetCharacterMovement()->DisableMovement();
 
 		/* Destroy 10 seconds from now, gives us a chance to do the ragdoll. If we were to call Destroy() here instead,
 		 * then the bot would disappear instantly as soon as it reaches 0HP, and we wouldn't see the rag doll happpen.
