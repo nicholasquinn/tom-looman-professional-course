@@ -62,10 +62,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components | Attributes")
 	class USAttributeComponent* AttributeComp;
 
+	/* Actions */
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components | Actions")
+	class USActionComponent* ActionComponent;
+
 private:	
 
 	void MoveX(float AxisValue);
 	void MoveY(float AxisValue);
+
+	void StartSprinting();
+	void StopSprinting();
 
 	UFUNCTION()
 	void OnHealthChanged(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta);

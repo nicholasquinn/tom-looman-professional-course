@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "SAttributeComponent.h"
 #include "SInteractionComponent.h"
+#include "SActionComponent.h"
 
 
 // Sets default values
@@ -21,6 +22,7 @@ ASCharacter::ASCharacter()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>(TEXT("InteractionComp"));
 	AttributeComp = CreateDefaultSubobject<USAttributeComponent>(TEXT("AttributeComp"));
+	ActionComponent = CreateDefaultSubobject<USActionComponent>(TEXT("ActionComponent"));
 
 	SpringArmComp->SetupAttachment(RootComponent);
 	CameraComp->SetupAttachment(SpringArmComp);
@@ -109,6 +111,17 @@ void ASCharacter::MoveY(float AxisValue)
 	AddMovementInput(ControllerRightVector, AxisValue);
 }
 
+
+void ASCharacter::StartSprinting()
+{
+	ActionComponent->StartActionByName(this, "Sprint");
+}
+
+
+void ASCharacter::StopSprinting()
+{
+	ActionComponent->StopActionByName(this, "Sprint");
+}
 
 void ASCharacter::OnHealthChanged(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta)
 {
@@ -249,6 +262,9 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	/* You can bind directly to the instance of the interaction component that this character class owns. 
 	 * You don't need to make a middle-man method. */
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this->InteractionComp, &USInteractionComponent::PrimaryInteract);
+
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ASCharacter::StartSprinting);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ASCharacter::StopSprinting);
 }
 
 
