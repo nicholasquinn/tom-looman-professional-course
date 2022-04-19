@@ -5,6 +5,14 @@
 #include <SGameplayInterface.h>
 #include "DrawDebugHelpers.h"
 
+
+static TAutoConsoleVariable<bool> CVar_DrawDebug(
+	TEXT("su.DrawDebug"),
+	false,
+	TEXT("Turns on drawing of debug helpers."),
+	ECVF_Cheat
+);
+
 // Sets default values for this component's properties
 USInteractionComponent::USInteractionComponent()
 {
@@ -73,10 +81,15 @@ void USInteractionComponent::PrimaryInteract()
 		{
 			APawn* InteractingPawn = Cast<APawn>(GetOwner());
 			ISGameplayInterface::Execute_Interact(HitActor, InteractingPawn);
-			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, QueryRadius, 16, FColor::Green, false, 2.0f);
+			if (CVar_DrawDebug.GetValueOnGameThread()) {
+				DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, QueryRadius, 16, FColor::Green, false, 2.0f);
+			}
 			/* Only want to allow interacting with 1 item per attempt */
 			bInteracted = true; 
 		}
+
+		if (CVar_DrawDebug.GetValueOnGameThread()) { DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, QueryRadius, 16, FColor::Red, false, 2.0f); }
+
 		/* Log all Actors that are detected by the sweep */
 		UE_LOG(LogTemp, Warning, TEXT("   Found %s"), HitActor ? *HitActor->GetHumanReadableName() : *FString("Null Actor"));
 	}

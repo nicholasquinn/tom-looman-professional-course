@@ -15,6 +15,13 @@
 #include "EnvironmentQuery/EnvQueryTypes.h"
 
 
+static TAutoConsoleVariable<bool> CVar_SpawnBots(
+	TEXT("su.SpawnBots"),
+	true,
+	TEXT("Determines whether bots will spawn or not."),
+	ECVF_Cheat /* Enum Console Variable Flags :: Cheat */
+);
+
 ASGameModeBase::ASGameModeBase()
 {
 	BotSpawnInterval = 10.0f;
@@ -48,6 +55,13 @@ void ASGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
 
 void ASGameModeBase::SpawnBotTimerElapsed()
 {
+	/* If we have disabled spawning bots, skip spawning the bot! */
+	if (!CVar_SpawnBots.GetValueOnGameThread()) 
+	{ 
+		UE_LOG(LogTemp, Warning, TEXT("Spawning bots has been disabled."));
+		return; 
+	}
+
 	/* Moved checking of number of bots spawned to here because it's more efficient to
 	 * check whether we can even spawn one before even attempting to run the EQS which
 	 * is expensive. */

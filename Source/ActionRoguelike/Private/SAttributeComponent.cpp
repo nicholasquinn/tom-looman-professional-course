@@ -4,6 +4,14 @@
 #include "SAttributeComponent.h"
 #include "SGameModeBase.h"
 
+
+static TAutoConsoleVariable<float> CVar_DamageMultiplier(
+	TEXT("su.DamageMultiplier"),
+	1.0f,
+	TEXT("Scales the damage dealt in attribute components"),
+	ECVF_Cheat
+);
+
 // Sets default values for this component's properties
 USAttributeComponent::USAttributeComponent()
 	: Health{100}
@@ -12,7 +20,6 @@ USAttributeComponent::USAttributeComponent()
 {
 }
 
-
 bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth)
 {
 	/* Check if the owning actor is currently invincible. Note that the "God" command will set
@@ -20,9 +27,16 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 	 * God is an Exec command, it will not effect AI characters, as they are not possessed by
 	 * a PC. This means turning god mode on will allow us to still damage AI, regardless of
 	 * the code below. */
-	if (!GetOwner()->CanBeDamaged())
+	if (!GetOwner()->CanBeDamaged() && DeltaHealth < 0.0f)
 	{
 		return false;
+	}
+
+	/* Before calculating damage, apply damage multiplier. Note the damage multipler is only
+	 * applied if this is a damaging event */
+	if (DeltaHealth < 0.0f)
+	{
+		DeltaHealth *= CVar_DamageMultiplier.GetValueOnGameThread();
 	}
 
 	const float OldHealth = Health;
