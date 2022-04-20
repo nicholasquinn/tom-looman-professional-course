@@ -6,6 +6,8 @@
 #include "UObject/NoExportTypes.h"
 #include "SAction.generated.h"
 
+class UWorld;
+
 /**
  * 
  */
@@ -15,6 +17,8 @@ class ACTIONROGUELIKE_API USAction : public UObject
 	GENERATED_BODY()
 	
 public:
+
+	UWorld* GetWorld() const override;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
 	void StartAction(AActor* Instigator);
