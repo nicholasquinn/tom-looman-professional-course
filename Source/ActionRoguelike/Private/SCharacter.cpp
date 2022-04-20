@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "SAttributeComponent.h"
 #include "SInteractionComponent.h"
+#include "SActionComponent.h"
 
 
 // Sets default values
@@ -21,6 +22,7 @@ ASCharacter::ASCharacter()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>(TEXT("InteractionComp"));
 	AttributeComp = CreateDefaultSubobject<USAttributeComponent>(TEXT("AttributeComp"));
+	ActionComponent = CreateDefaultSubobject<USActionComponent>(TEXT("ActionComponent"));
 
 	SpringArmComp->SetupAttachment(RootComponent);
 	CameraComp->SetupAttachment(SpringArmComp);
@@ -44,14 +46,7 @@ ASCharacter::ASCharacter()
 	 * OrientRotationToMovement takes precedence over bUseControllerDesiredRotation. */
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	/* Set a sensible default for the attack timer duration */
-	PrimaryAttackTimerDuration = 0.2f;
-
-	/* Normalized aim direction vector gets multiplied by this scaler */
-	AimTraceDistance = 10000;
-
 	/* Set constants */
-	MuzzleName = "Muzzle_01";
 	HitTimeName = "HitTime";
 }
 
@@ -73,6 +68,7 @@ void ASCharacter::PostInitializeComponents()
 	AttributeComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
 }
 
+
 void ASCharacter::MoveX(float AxisValue)
 {
 	FRotator ControllerRotation = GetControlRotation();
@@ -84,6 +80,7 @@ void ASCharacter::MoveX(float AxisValue)
 	/* No need to clamp AxisValue for ACharacter, it is done internally - see CharacterMovementComponent.cpp 7094 */
 	AddMovementInput(ControllerRotation.Vector(), AxisValue);
 }
+
 
 void ASCharacter::MoveY(float AxisValue)
 {
@@ -110,6 +107,18 @@ void ASCharacter::MoveY(float AxisValue)
 }
 
 
+void ASCharacter::StartSprinting()
+{
+	ActionComponent->StartActionByName(this, "Sprint");
+}
+
+
+void ASCharacter::StopSprinting()
+{
+	ActionComponent->StopActionByName(this, "Sprint");
+}
+
+
 void ASCharacter::OnHealthChanged(AActor* InstigatorActor, class USAttributeComponent* OwningComponent, float NewHealth, float Delta)
 {
 	/* If we've been damaged (rather than healed) */
@@ -128,98 +137,23 @@ void ASCharacter::OnHealthChanged(AActor* InstigatorActor, class USAttributeComp
 }
 
 
-void ASCharacter::PlayAttackEffects(UAnimMontage* AttackAnim)
-{
-	PlayAnimMontage(AttackAnim);
-	UGameplayStatics::SpawnEmitterAttached(
-		CastEffect, GetMesh(), MuzzleName, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget
-	);
-}
-
-void ASCharacter::Attack(TSubclassOf<ASMagicProjectileBase> ProjectileTypeToSpawn)
-{
-	/* Perform a trace to try find the aim point. If nothing is hit, then just take
-	 * the end of the trace as the aim point. */
-	FHitResult OutHit;
-	const FVector TraceStart = CameraComp->GetComponentLocation();
-	FVector TraceEnd = TraceStart + (CameraComp->GetForwardVector() * AimTraceDistance);
-	FCollisionObjectQueryParams AimTraceQueryObjectSettings;
-	AimTraceQueryObjectSettings.AddObjectTypesToQuery(ECC_WorldStatic);
-	AimTraceQueryObjectSettings.AddObjectTypesToQuery(ECC_WorldDynamic);
-	AimTraceQueryObjectSettings.AddObjectTypesToQuery(ECC_Pawn);
-	AimTraceQueryObjectSettings.AddObjectTypesToQuery(ECC_PhysicsBody);
-
-	/* Ignore ourselves (we have ECC_Pawn enabled, but that's for hitting other pawns,
-	 * such as enemies, not ourselves. You can specify general trace settings with the
-	 * FCollisionQueryParams type, the ...ObjectQueryParams one is just for setting
-	 * which object types to detect. */
-	FCollisionQueryParams AimTraceQuerySettings;
-	AimTraceQuerySettings.AddIgnoredActor(this);
-
-	TraceEnd = GetWorld()->LineTraceSingleByObjectType(OutHit, TraceStart, TraceEnd, AimTraceQueryObjectSettings, AimTraceQuerySettings)
-		? OutHit.ImpactPoint : TraceEnd;
-
-	/* Draw the result of the line trace as a debug line that lasts for 2 seconds */
-	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Orange, false, 2.0f);
-
-	/* Get the location of the hand socket. Sockets are added to skeletal meshes to mark positions,
-	 * usually for attachment or for spawning things at said location e.g. bullets/projectiles */
-	const FVector HandLocation = GetMesh()->GetSocketLocation(MuzzleName);
-
-	const FTransform SpawnTransform = FTransform((TraceEnd - HandLocation).Rotation(), HandLocation);
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Instigator = this;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	GetWorld()->SpawnActor<AActor>(ProjectileTypeToSpawn, SpawnTransform, SpawnParams);
-}
-
-/* Each <Foo>Attack function plays its corresponding animation, then sets a timer via it's corresponding
- * timer handle, for its corresponding duration, which calls the corresponding callback. */
 void ASCharacter::PrimaryAttack()
 {
-	/* play the animation asset assigned in the editor */
-	PlayAttackEffects(PrimaryAttackAnim);
-
-	/* Set a one-shot timer that will call PrimaryAttackCallback when it expires. */
-	GetWorldTimerManager().SetTimer(PrimaryAttackTimerHandle, this, &ASCharacter::PrimaryAttackCallback, PrimaryAttackTimerDuration);
+	ActionComponent->StartActionByName(this, "BasicProjectile");
 }
 
-/* See PrimaryAttack for explanation */
+
 void ASCharacter::SecondaryAttack()
 {
-	PlayAttackEffects(SecondaryAttackAnim);
-	GetWorldTimerManager().SetTimer(SecondaryAttackTimerHandle, this, &ASCharacter::SecondaryAttackCallback, SecondaryAttackTimerDuration);
+	ActionComponent->StartActionByName(this, "DashProjectile");
 }
 
-/* See PrimaryAttack for explanation */
+
 void ASCharacter::UltimateAttack()
 {
-	PlayAttackEffects(UltimateAttackAnim);
-	GetWorldTimerManager().SetTimer(UltimateAttackTimerHandle, this, &ASCharacter::UltimateAttackCallback, UltimateAttackTimerDuration);
+	ActionComponent->StartActionByName(this, "BlackHoleProjectile");
 }
 
-// Called after the Timer referenced by PrimaryAttackTimerHandle expires, which takes PrimaryAttackTimerDuration seconds.
-void ASCharacter::PrimaryAttackCallback()
-{
-	ensureAlways(PrimaryProjectileClass);
-	Attack(PrimaryProjectileClass);
-}
-
-
-void ASCharacter::SecondaryAttackCallback()
-{
-	ensureAlways(SecondaryProjectileClass);
-	Attack(SecondaryProjectileClass);
-}
-
-
-void ASCharacter::UltimateAttackCallback()
-{
-	ensureAlways(UltimateProjectileClass);
-	Attack(UltimateProjectileClass);
-}
 
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
@@ -228,6 +162,7 @@ void ASCharacter::Tick(float DeltaTime)
 
 	DrawControlVsPawnRotationDebugArrows();
 }
+
 
 // Called to bind functionality to input
 void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -249,6 +184,9 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	/* You can bind directly to the instance of the interaction component that this character class owns. 
 	 * You don't need to make a middle-man method. */
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this->InteractionComp, &USInteractionComponent::PrimaryInteract);
+
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ASCharacter::StartSprinting);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ASCharacter::StopSprinting);
 }
 
 
@@ -256,6 +194,7 @@ FVector ASCharacter::GetPawnViewLocation() const
 {
 	return CameraComp->GetComponentLocation();
 }
+
 
 void ASCharacter::DrawControlVsPawnRotationDebugArrows()
 {
@@ -275,6 +214,7 @@ void ASCharacter::DrawControlVsPawnRotationDebugArrows()
 	// Draw 'Controller' Rotation ('PlayerController' that 'possessed' this character)
 	DrawDebugDirectionalArrow(GetWorld(), LineStart, ControllerDirection_LineEnd, DrawScale, FColor::Green, false, 0.0f, 0, Thickness);
 }
+
 
 void ASCharacter::AddHealth(float Amount /*= 100*/)
 {

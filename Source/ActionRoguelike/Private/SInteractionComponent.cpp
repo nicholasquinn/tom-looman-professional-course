@@ -21,7 +21,7 @@ USInteractionComponent::USInteractionComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	/* Set sensible defaults for the query, but these can be overridden in the editor. */
-	QueryLength = 200.0f;	// 2m sweep 
+	QueryLength = 500.0f;	// 5m sweep now that we are going from camera which is further behind player 
 	QueryRadius = 15.0f;	// of 30cm diameter sphere
 }
 
@@ -55,7 +55,7 @@ void USInteractionComponent::PrimaryInteract()
 	/* Get the location and rotation of the RootComponent, which is the CapsuleComponent I believe */
 	GetOwner()->GetActorEyesViewPoint(EyeLocation, LookDirection);
 	/* Use the look direction and eyes starting location and query length to calculate the sweep end point */
-	FVector QueryEnd = EyeLocation + LookDirection.Vector() * QueryLength;
+	FVector QueryEnd = EyeLocation + LookDirection.Vector().GetSafeNormal() * QueryLength;
 
 	/* The settings for the object style query, most importantly, what object types (plural) to look for.
 	 * We are only interested in WorldDynamic, but nice to know you can put more. */
@@ -69,6 +69,12 @@ void USInteractionComponent::PrimaryInteract()
 	/* Perform the actual sweep. Multi means we can detect multiple collisions, by object type means the query is looking for a specific object
 	 * type, which was set to WorldDynamic (see above) */
 	bool bBlockingHit = GetWorld()->SweepMultiByObjectType(OutHits, EyeLocation, QueryEnd, FQuat::Identity, ObjectQuerySettings, SphereCollider);
+
+	if (CVar_DrawDebug.GetValueOnGameThread()) {
+		DrawDebugLine(GetWorld(), EyeLocation, QueryEnd, FColor::Orange, false, 1.0f);
+		DrawDebugSphere(GetWorld(), EyeLocation, QueryRadius, 8, FColor::Orange, false, 1.0f);
+		DrawDebugSphere(GetWorld(), QueryEnd, QueryRadius, 8, FColor::Orange, false, 1.0f);
+	}
 
 	/* For each WorldDynamic object that was collided with by the sweep */
 	UE_LOG(LogTemp, Warning, TEXT("USInteractionComponent::PrimaryInteract - Performing Sweep Query for Interactable Actors"));
