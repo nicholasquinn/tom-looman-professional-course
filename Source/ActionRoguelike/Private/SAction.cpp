@@ -3,14 +3,32 @@
 
 #include "SAction.h"
 
+#include <SActionComponent.h>
+
+
 void USAction::StartAction_Implementation(AActor* Instigator)
 {
 	UE_LOG(LogTemp, Warning, TEXT("%s is starting action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+
+	/* Now that we're starting this action, add all of its Grants tags to the owning action component. */
+	USActionComponent* OwningActionComp = GetOwningComponent();
+	ensure(OwningActionComp);
+	OwningActionComp->ActiveGameplayTags.AppendTags(GrantsTags);
 }
 
 void USAction::StopAction_Implementation(AActor* Instigator)
 {
 	UE_LOG(LogTemp, Warning, TEXT("%s is stopping action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+
+	/* Now that we're stopping this action, remove all of its Grants tags from the owning action component. */
+	USActionComponent* OwningActionComp = GetOwningComponent();
+	ensure(OwningActionComp);
+	OwningActionComp->ActiveGameplayTags.RemoveTags(GrantsTags);
+}
+
+USActionComponent* USAction::GetOwningComponent()
+{
+	return Cast<USActionComponent>(GetOuter());
 }
 
 /* An Actor is something that is placed in the world. UObjects however are not themselves

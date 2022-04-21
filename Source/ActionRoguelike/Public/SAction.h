@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "GameplayTagContainer.h"
 #include "SAction.generated.h"
 
-class UWorld;
 
 /**
  * 
@@ -18,7 +18,8 @@ class ACTIONROGUELIKE_API USAction : public UObject
 	
 public:
 
-	UWorld* GetWorld() const override;
+	UFUNCTION(BlueprintCallable, Category = "Action")
+	class USActionComponent* GetOwningComponent();
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
 	void StartAction(AActor* Instigator);
@@ -26,10 +27,20 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
 	void StopAction(AActor* Instigator);
 
+	class UWorld* GetWorld() const override;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
 	FName ActionName;
 
 protected:
+
+	/* This action cannot run if any of these tags exist in the action component's active tags container. */
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTagContainer BlockedTags;
+
+	/* This action adds the following tags to the action component's active tags container. */
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTagContainer GrantsTags;
 
 private:
 
