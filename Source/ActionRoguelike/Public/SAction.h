@@ -22,12 +22,18 @@ public:
 	class USActionComponent* GetOwningComponent();
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
+	bool CanStart(AActor* Instigator);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Action")
 	void StartAction(AActor* Instigator);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
 	void StopAction(AActor* Instigator);
 
 	class UWorld* GetWorld() const override;
+
+	UFUNCTION(BlueprintPure, Category = "Action")
+	bool GetIsRunning() const;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
 	FName ActionName;
@@ -41,6 +47,8 @@ protected:
 	/* This action adds the following tags to the action component's active tags container. */
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer GrantsTags;
+
+	bool bIsRunning = false;
 
 private:
 
