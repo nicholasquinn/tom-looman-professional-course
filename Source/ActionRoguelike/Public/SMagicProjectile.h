@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "SMagicProjectileBase.h"
+#include "GameplayTagContainer.h"
 
 #include "SMagicProjectile.generated.h"
 
@@ -31,9 +32,14 @@ protected:
 		const FHitResult& SweepResult
 	);
 
+	UPROPERTY(EditAnywhere, Category = "Damage")
+	FGameplayTag ParryTag;
+
 private:
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
 	float Damage;
+
+	bool bHasBeenReflected;
 
 };

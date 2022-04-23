@@ -32,6 +32,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USAttributeComponent* AttributeComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class USActionComponent* ActionComp;
+
 	UPROPERTY(VisibleAnywhere, Category = "Effects")
 	FName HitTimeName;
 

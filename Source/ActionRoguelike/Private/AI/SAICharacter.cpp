@@ -16,6 +16,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "SActionComponent.h"
 
 
 // Sets default values
@@ -23,6 +24,7 @@ ASAICharacter::ASAICharacter()
 {
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensingComp"));
 	AttributeComp = CreateDefaultSubobject<USAttributeComponent>(TEXT("AttributeComp"));
+	ActionComp = CreateDefaultSubobject<USActionComponent>(TEXT("ActionComp"));
 
 	/* Temporary fix to let magic projectile hit the mesh rather than the capsule component.
 	 * The projectile should really have its own object type, rather than using world dynamic,
