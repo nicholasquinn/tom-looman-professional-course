@@ -5,16 +5,19 @@
 
 /* Non-engine headers */
 #include "SAttributeComponent.h"
+#include "SMagicProjectileBase.h"
 
 /* Engine headers */
 #include <Components/SphereComponent.h>
 #include "SGameplayFunctionLibrary.h"
-
+#include "SActionComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 
 ASMagicProjectile::ASMagicProjectile()
 {
 	Damage = 20.0f;
+	bHasBeenReflected = false;
 }
 
 void ASMagicProjectile::PostInitializeComponents()
@@ -49,6 +52,21 @@ void ASMagicProjectile::OnOverlapTryDamageOtherActor
 	//		Explode();
 	//	}
 	//}
+
+	/* If the other actor is null, or it is the same as who shot the projectile, skip i.e. no friendly fire */
+	if (!OtherActor || OtherActor == GetInstigator()) return;
+
+	/* Check if the other actor has an action component that contains a parry tag */
+	USActionComponent* ActionComponent = Cast<USActionComponent>(OtherActor->GetComponentByClass(USActionComponent::StaticClass()));
+	if (!bHasBeenReflected && ActionComponent && ActionComponent->ActiveGameplayTags.HasTag(ParryTag))
+	{
+		// if it does, reflect the projectile back at them, and don't take any damage
+		MovementComp->Velocity = -MovementComp->Velocity;
+		SetInstigator(Cast<APawn>(OtherActor));
+		bHasBeenReflected = true;
+		UE_LOG(LogTemp, Warning, TEXT("Projectile reflected!"));
+		return; // by early exiting here, we don't take damage below...
+	}
 
 	/* New implementation using the GameplayFunctionLibrary */
 	if (USGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, Damage, SweepResult))

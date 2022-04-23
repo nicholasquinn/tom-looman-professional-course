@@ -24,6 +24,9 @@ void USActionComponent::BeginPlay()
 void USActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	FString Msg = GetNameSafe(GetOwner()) + " : " + ActiveGameplayTags.ToStringSimple();
+	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, Msg);
 }
 
 void USActionComponent::AddAction(TSubclassOf<USAction> ActionClass)
@@ -43,6 +46,18 @@ bool USActionComponent::StartActionByName(AActor* Instigator, FName ActionName)
 	{
 		if (Action && Action->ActionName == ActionName)
 		{
+			/* We found an action with the given name, but can we start it? */
+			if (!Action->CanStart(Instigator))
+			{
+				/* we cannot, but continue looking as there might be multiple actions with the same name */
+				GEngine->AddOnScreenDebugMessage(
+					-1, 2.0f, FColor::Red, FString::Printf(
+						TEXT("Failed to start action: "), *(ActionName.ToString())
+					)
+				);
+				continue;
+			}
+
 			Action->StartAction(Instigator);
 			return true;
 		}
@@ -54,7 +69,7 @@ bool USActionComponent::StopActionByName(AActor* Instigator, FName ActionName)
 {
 	for (USAction* Action : Actions)
 	{
-		if (Action && Action->ActionName == ActionName)
+		if (Action && Action->ActionName == ActionName && Action->GetIsRunning())
 		{
 			Action->StopAction(Instigator);
 			return true;
