@@ -17,15 +17,17 @@ void ASCoin::Interact_Implementation(APawn* InstigatorPawn)
 {
 	ensureAlways(InstigatorPawn);
 
-	/* Consume */
-	Super::ConsumePowerup();
-
 	/* Grant credits to the player who is interacting */
-	ASPlayerState* SPlayerState = Cast<ASPlayerState>(InstigatorPawn->GetPlayerState());
-	if (SPlayerState)
+	if (!bConsumed)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Adding credits to player state"));
-		SPlayerState->AddCredits(NumCreditsToGrant);
+		ASPlayerState* SPlayerState = Cast<ASPlayerState>(InstigatorPawn->GetPlayerState());
+		if (SPlayerState)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Adding credits to player state"));
+			SPlayerState->AddCredits(NumCreditsToGrant);
+		}
 	}
 
+	/* Consume */
+	Super::ConsumePowerup();
 }

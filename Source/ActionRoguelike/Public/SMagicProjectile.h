@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "SMagicProjectileBase.h"
 #include "GameplayTagContainer.h"
+#include "Chaos/Array.h"
 
 #include "SMagicProjectile.generated.h"
 
@@ -34,6 +35,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Damage")
 	FGameplayTag ParryTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	TArray<TSubclassOf<class USActionEffect>> ActionEffectClasses;
 
 private:
 

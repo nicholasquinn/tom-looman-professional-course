@@ -41,6 +41,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components | Actions")
 	class USActionComponent* ActionComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Components | Core")
+	class USInteractionComponent* InteractionComp;
+
 private:	
 
 	void MoveX(float AxisValue);
@@ -62,9 +65,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components | Core")
 	class USpringArmComponent* SpringArmComp;
-
-	UPROPERTY(VisibleAnywhere, Category = "Components | Core")
-	class USInteractionComponent* InteractionComp;
 
 	UPROPERTY(VisibleAnywhere, Category = "Constants")
 	FName HitTimeName;

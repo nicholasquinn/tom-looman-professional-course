@@ -4,6 +4,8 @@
 #include "SInteractionComponent.h"
 #include <SGameplayInterface.h>
 #include "DrawDebugHelpers.h"
+#include "Blueprint/UserWidget.h"
+#include "SWorldUserWidget.h"
 
 
 static TAutoConsoleVariable<bool> CVar_DrawDebug(
@@ -23,6 +25,8 @@ USInteractionComponent::USInteractionComponent()
 	/* Set sensible defaults for the query, but these can be overridden in the editor. */
 	QueryLength = 500.0f;	// 5m sweep now that we are going from camera which is further behind player 
 	QueryRadius = 15.0f;	// of 30cm diameter sphere
+	QueryFrequency = 0.3;
+	QueryCollisionChannel = ECollisionChannel::ECC_WorldDynamic;
 }
 
 
@@ -31,20 +35,20 @@ void USInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	/* Set a periodic timer to perform the line trace for interactables in front of you */
+	FTimerHandle TimerHandle_Unused;
+	FTimerDelegate Delegate; 
+	Delegate.BindUFunction(this, "FindBestInteractable");
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Unused, Delegate, QueryFrequency, true);
 }
-
 
 // Called every frame
 void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
-void USInteractionComponent::PrimaryInteract()
+void USInteractionComponent::FindBestInteractable()
 {
 	/* Initialise parameters for Sweep query */
 
@@ -60,7 +64,7 @@ void USInteractionComponent::PrimaryInteract()
 	/* The settings for the object style query, most importantly, what object types (plural) to look for.
 	 * We are only interested in WorldDynamic, but nice to know you can put more. */
 	FCollisionObjectQueryParams ObjectQuerySettings;
-	ObjectQuerySettings.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectQuerySettings.AddObjectTypesToQuery(QueryCollisionChannel);
 
 	/* The collision shape to sweep through the world. */
 	FCollisionShape SphereCollider;
@@ -76,6 +80,8 @@ void USInteractionComponent::PrimaryInteract()
 		DrawDebugSphere(GetWorld(), QueryEnd, QueryRadius, 8, FColor::Orange, false, 1.0f);
 	}
 
+	FocusedActor = nullptr;
+
 	/* For each WorldDynamic object that was collided with by the sweep */
 	UE_LOG(LogTemp, Warning, TEXT("USInteractionComponent::PrimaryInteract - Performing Sweep Query for Interactable Actors"));
 	bool bInteracted = false;
@@ -85,13 +91,13 @@ void USInteractionComponent::PrimaryInteract()
 		/* If we haven't yet interacted with anything, try interact */
 		if (!bInteracted && HitActor && HitActor->Implements<USGameplayInterface>())
 		{
-			APawn* InteractingPawn = Cast<APawn>(GetOwner());
-			ISGameplayInterface::Execute_Interact(HitActor, InteractingPawn);
+			
 			if (CVar_DrawDebug.GetValueOnGameThread()) {
 				DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, QueryRadius, 16, FColor::Green, false, 2.0f);
 			}
+			FocusedActor = HitActor;
 			/* Only want to allow interacting with 1 item per attempt */
-			bInteracted = true; 
+			bInteracted = true;
 		}
 
 		if (CVar_DrawDebug.GetValueOnGameThread()) { DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, QueryRadius, 16, FColor::Red, false, 2.0f); }
@@ -99,5 +105,38 @@ void USInteractionComponent::PrimaryInteract()
 		/* Log all Actors that are detected by the sweep */
 		UE_LOG(LogTemp, Warning, TEXT("   Found %s"), HitActor ? *HitActor->GetHumanReadableName() : *FString("Null Actor"));
 	}
+
+	/* If we have focus on an interactable */
+	if (FocusedActor)
+	{
+		/* and we haven't yet spawned a widget (and we do have a widget class that we can spawn) */
+		if (!DefaultWidget && ensure(DefaultWidgetClass))
+		{
+			/* Spawn and add it to viewport lazily */
+			DefaultWidget = CreateWidget<USWorldUserWidget>(GetWorld(), DefaultWidgetClass);
+
+		}
+
+		/* Regardless of whether it was just created or not, set the owning actor and add to viewport if not already there */
+		if (DefaultWidget)
+		{
+			DefaultWidget->OwningActor = FocusedActor;
+			if (!DefaultWidget->IsInViewport())
+			{
+				DefaultWidget->AddToViewport();
+			}
+		}
+	}
+	else if (DefaultWidget && DefaultWidget->IsInViewport()) // No focused actor, but we do have a widget
+	{
+		DefaultWidget->RemoveFromParent();
+	}
+}
+
+void USInteractionComponent::PrimaryInteract()
+{
+	if (!FocusedActor) { return; }
+	APawn* InteractingPawn = Cast<APawn>(GetOwner());
+	ISGameplayInterface::Execute_Interact(FocusedActor, InteractingPawn);
 }
 

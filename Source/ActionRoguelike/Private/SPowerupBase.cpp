@@ -32,10 +32,14 @@ void ASPowerupBase::Interact_Implementation(APawn* InstigatorPawn)
 
 void ASPowerupBase::ConsumePowerup_Implementation()
 {
-	GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &ASPowerupBase::EnablePowerup, CooldownDuration);
-	DisablePowerup();
+	if (!bConsumed)
+	{
+		bConsumed = true;
+		GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &ASPowerupBase::EnablePowerup, CooldownDuration);
+		DisablePowerup();
 
-	UGameplayStatics::PlaySoundAtLocation(this, ConsumeSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, ConsumeSound, GetActorLocation());
+	}
 }
 
 void ASPowerupBase::DisablePowerup_Implementation()

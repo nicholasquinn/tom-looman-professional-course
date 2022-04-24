@@ -18,8 +18,8 @@ class ACTIONROGUELIKE_API USAction : public UObject
 	
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "Action")
-	class USActionComponent* GetOwningComponent();
+	UFUNCTION(BlueprintPure, Category = "Action")
+	class USActionComponent* GetOwningComponent() const;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
 	bool CanStart(AActor* Instigator);
@@ -34,6 +34,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Action")
 	bool GetIsRunning() const;
+
+	/* Should this action be started immediately when added to an action component? */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Action")
+	bool bAutoStart;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
 	FName ActionName;
