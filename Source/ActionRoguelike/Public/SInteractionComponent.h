@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "SInteractionComponent.generated.h"
 
+class USWorldUserWidget;
 
 /* Rather than adding a query directly to the SCharacter class, we have created an Actor component
  * that provides this functionality. This is good, because now other classes can do interactions,
@@ -35,11 +36,31 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere)
+	UFUNCTION()
+	void FindBestInteractable();
+
+	UPROPERTY(EditAnywhere, Category = "Query")
 	float QueryLength; // Interaction query distance
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Query")
 	float QueryRadius; // Interaction query radius (using a sphere sweep)
+
+	UPROPERTY(EditAnywhere, Category = "Query")
+	float QueryFrequency; // Interaction query radius (using a sphere sweep)
+	
+	/* Have to wrap non enum class type enums in this, otherwise uproperty doesn't work */
+	UPROPERTY(EditAnywhere, Category = "Query")
+	TEnumAsByte<ECollisionChannel> QueryCollisionChannel;
+
+	/* UPROPERTY solely for the garbage collection */
+	UPROPERTY()
+	AActor* FocusedActor;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<USWorldUserWidget> DefaultWidgetClass;
+
+	UPROPERTY()
+	USWorldUserWidget* DefaultWidget;
 
 private:
 		

@@ -44,6 +44,10 @@ protected:
 
 	FTimerHandle CooldownTimerHandle;
 
+	/* Need this so you cannot spam interact and cause the interact function to run multiple
+	 * times before it's actually consumed. */
+	bool bConsumed;
+
 private:	
 
 
