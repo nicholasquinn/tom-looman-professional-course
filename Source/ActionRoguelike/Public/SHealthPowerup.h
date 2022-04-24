@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
 	float HealAmount;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
+	int32 Cost;
+
 private:
 	
 };

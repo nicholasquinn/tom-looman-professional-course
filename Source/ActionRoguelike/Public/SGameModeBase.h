@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
+#include "SPowerupBase.h"
 #include "SGameModeBase.generated.h"
 
 /**
@@ -47,6 +48,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TSubclassOf<AActor> MinionAiClass;
+
+	UFUNCTION() /* Required for delegates bound functions */
+	void OnPowerupQueryFinished(class UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Powerups")
+	class UEnvQuery* GetPowerupSpawnLocationsQuery;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Powerups")
+	TArray<TSubclassOf<ASPowerupBase>> PowerupClasses;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Powerups")
+	int32 NumPowerupsToSpawn;
 
 private:
 
