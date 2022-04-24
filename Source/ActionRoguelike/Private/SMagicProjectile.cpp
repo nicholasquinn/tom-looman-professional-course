@@ -12,6 +12,7 @@
 #include "SGameplayFunctionLibrary.h"
 #include "SActionComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "SActionEffect.h"
 
 
 ASMagicProjectile::ASMagicProjectile()
@@ -71,6 +72,13 @@ void ASMagicProjectile::OnOverlapTryDamageOtherActor
 	/* New implementation using the GameplayFunctionLibrary */
 	if (USGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, Damage, SweepResult))
 	{
+		if (ActionComponent)
+		{
+			for (TSubclassOf<USActionEffect> ActionEffect : ActionEffectClasses)
+			{
+				ActionComponent->AddAction(GetInstigator(), ActionEffect);
+			}
+		}
 		Explode();
 	}
 }

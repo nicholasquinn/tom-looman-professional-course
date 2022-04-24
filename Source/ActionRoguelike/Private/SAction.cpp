@@ -18,6 +18,7 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 	OwningActionComp->ActiveGameplayTags.AppendTags(GrantsTags);
 
 	bIsRunning = true;
+	bAutoStart = false; // The majority of actions are started by input, not automatically 
 }
 
 void USAction::StopAction_Implementation(AActor* Instigator)
@@ -34,7 +35,7 @@ void USAction::StopAction_Implementation(AActor* Instigator)
 	bIsRunning = false;
 }
 
-USActionComponent* USAction::GetOwningComponent()
+USActionComponent* USAction::GetOwningComponent() const
 {
 	return Cast<USActionComponent>(GetOuter());
 }

@@ -15,9 +15,10 @@ void USActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	/* Start the default actions, owner is insigator for all of them */
 	for (TSubclassOf<USAction> ActionClass : DefaultActions)
 	{
-		AddAction(ActionClass);
+		AddAction(GetOwner(), ActionClass);
 	}
 }
 
@@ -29,7 +30,7 @@ void USActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, Msg);
 }
 
-void USActionComponent::AddAction(TSubclassOf<USAction> ActionClass)
+void USActionComponent::AddAction(AActor* InstigatorActor, TSubclassOf<USAction> ActionClass)
 {
 	if (!ensure(ActionClass)) { return; }
 
@@ -37,7 +38,19 @@ void USActionComponent::AddAction(TSubclassOf<USAction> ActionClass)
 	if (ensure(ActionInstance))
 	{
 		Actions.Add(ActionInstance);
+		/* we assume an autostart action can always start... otherwise it doesn't make sense! */
+		if (ActionInstance->bAutoStart && ensure(ActionInstance->CanStart(InstigatorActor)))
+		{
+			ActionInstance->StartAction(InstigatorActor);
+		}
 	}
+}
+
+void USActionComponent::RemoveAction(USAction* Action)
+{
+	// if action is null, early exit. If it isn't null, but is still running, also early exit.
+	if (!ensure(Action && !Action->GetIsRunning())) { return; }
+	Actions.Remove(Action);
 }
 
 bool USActionComponent::StartActionByName(AActor* Instigator, FName ActionName)
