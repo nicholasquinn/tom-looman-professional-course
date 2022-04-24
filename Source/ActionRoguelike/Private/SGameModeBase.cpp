@@ -13,6 +13,9 @@
 #include "EngineUtils.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
+#include "SPlayerState.h"
+#include "SHealthPowerup.h"
+#include "SCoin.h"
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -26,12 +29,24 @@ ASGameModeBase::ASGameModeBase()
 {
 	BotSpawnInterval = 10.0f;
 	DefaultBotSpawnLimit = 10;
+	NumPowerupsToSpawn = 30;
+
+	// Since we aren't making a blueprint child of ASPlayerState, we can set it on the gamemode via C++
+	PlayerStateClass = ASPlayerState::StaticClass();
 }
 
 void ASGameModeBase::StartPlay()
 {
 	Super::StartPlay();
 	GetWorldTimerManager().SetTimer(SpawnBotTimerHandle, this, &ASGameModeBase::SpawnBotTimerElapsed, BotSpawnInterval, true);
+
+	UEnvQueryInstanceBlueprintWrapper* PowerupQuery
+		= UEnvQueryManager::RunEQSQuery(this, GetPowerupSpawnLocationsQuery, this, EEnvQueryRunMode::AllMatching, nullptr);
+
+	if (ensure(PowerupQuery))
+	{
+		PowerupQuery->GetOnQueryFinishedEvent().AddDynamic(this, &ASGameModeBase::OnPowerupQueryFinished);
+	}
 }
 
 void ASGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
@@ -48,6 +63,19 @@ void ASGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
 		RespawnPlayerDelegate.BindUFunction(this, "RespawnPlayerElapsed", SCharacter->GetController());
 		float RespawnTimerDuration = 2.0f; // TODO: expose as tweakable property
 		GetWorldTimerManager().SetTimer(PlayerRespawnTimerHandle, RespawnPlayerDelegate, RespawnTimerDuration, false);
+	}
+	else if (ASAICharacter* AICharacter = Cast<ASAICharacter>(Victim))
+	{
+		/* Grant credits to the killer */
+		APawn* PlayerPawn = Cast<APawn>(Killer);
+		if (!PlayerPawn) return;
+
+		APlayerController* PC = PlayerPawn->GetController<APlayerController>();
+		if (!PC) return;
+		ASPlayerState* PlayerState = PC->GetPlayerState<ASPlayerState>();
+		if (!PlayerState) return;
+
+		PlayerState->AddCredits(5);
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("%s was killed by %s"), *GetNameSafe(Victim), *GetNameSafe(Killer));
@@ -133,6 +161,36 @@ void ASGameModeBase::OnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Quer
 	GetWorld()->SpawnActor<AActor>(MinionAiClass, Locations[0], FRotator::ZeroRotator, ActorSpawnParams);
 	DrawDebugSphere(GetWorld(), Locations[0], 25, 8, FColor::Green, false, BotSpawnInterval);
 
+}
+
+void ASGameModeBase::OnPowerupQueryFinished(class UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
+{
+	/* If the query returns any result other than success, we consider it a failure. */
+	if (QueryStatus != EEnvQueryStatus::Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Get Powerups Spawn Locations query failed!"));
+		return;
+	}
+
+	/* Query succeeded, get results. If there are none, return. */
+	TArray<FVector> Locations;
+	if (!QueryInstance->GetQueryResultsAsLocations(Locations)) { return; }
+
+	ensure(PowerupClasses.Num() > 0);
+
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	for (int32 i = 0; i < NumPowerupsToSpawn; ++i)
+	{
+		const int32 RandomIndex = FMath::RandRange(0, Locations.Num() - 1);
+		/* Spawn a random one of the powerup classes. Note that we cannot spawn ASCoin::StaticClass() or ASHealthPowerup::StaticClass()
+		 * here because those have no assets assigned (no meshes etc.), and so would just be invisible in the world. This is why we
+		 * created an editable TArray of ASPowerupBase's, so that we can assigned the blueprint child classes that have assets assigned. */
+		GetWorld()->SpawnActor<AActor>(
+			PowerupClasses[FMath::RandRange(0, PowerupClasses.Num() - 1)], Locations[RandomIndex], FRotator::ZeroRotator, SpawnParameters
+		);
+		Locations.RemoveAt(RandomIndex);
+	}
 }
 
 void ASGameModeBase::RespawnPlayerElapsed(AController* Controller)
