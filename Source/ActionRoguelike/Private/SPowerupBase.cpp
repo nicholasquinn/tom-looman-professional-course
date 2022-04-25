@@ -22,6 +22,8 @@ ASPowerupBase::ASPowerupBase()
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	CooldownDuration = 10;
+
+	SetReplicates(true);
 }
 
 void ASPowerupBase::Interact_Implementation(APawn* InstigatorPawn)

@@ -48,6 +48,8 @@ ASMagicProjectileBase::ASMagicProjectileBase()
 	/* Camera shake radius */
 	ImpactShakeInnerRadius = 100;
 	ImpactShakeOuterRadius = 1000;
+
+	SetReplicates(true);
 }
 
 void ASMagicProjectileBase::PostInitProperties()
