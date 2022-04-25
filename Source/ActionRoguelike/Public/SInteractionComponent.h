@@ -39,6 +39,9 @@ protected:
 	UFUNCTION()
 	void FindBestInteractable();
 
+	UFUNCTION(Server, Reliable)
+	void ServerInteract(AActor* InFocusedActor);
+
 	UPROPERTY(EditAnywhere, Category = "Query")
 	float QueryLength; // Interaction query distance
 
