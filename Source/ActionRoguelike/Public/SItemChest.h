@@ -23,7 +23,17 @@ public:
 	 * Other Actors need to be able to call Interact on this actor to interact with it. */
 	void Interact_Implementation(APawn* InstigatorPawn);
 
+	/** Returns the properties used for network replication, this needs to be overridden by all actor classes with native replicated properties */
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
+
+	/* RepNotify */
+	UPROPERTY(ReplicatedUsing = "OnRep_ToggleLid", BlueprintReadOnly)
+	bool bIsOpen;
+
+	UFUNCTION()
+	void OnRep_ToggleLid();
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* BaseMesh;
@@ -32,7 +42,7 @@ protected:
 	UStaticMeshComponent* LidMesh;
 
 	UPROPERTY(EditAnywhere)
-	float TargetPitch;
+	float OpenPitch;
 
 private:
 

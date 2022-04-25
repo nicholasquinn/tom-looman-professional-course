@@ -25,7 +25,7 @@ USInteractionComponent::USInteractionComponent()
 	/* Set sensible defaults for the query, but these can be overridden in the editor. */
 	QueryLength = 500.0f;	// 5m sweep now that we are going from camera which is further behind player 
 	QueryRadius = 15.0f;	// of 30cm diameter sphere
-	QueryFrequency = 0.3;
+	QueryFrequency = 0.1f;
 	QueryCollisionChannel = ECollisionChannel::ECC_WorldDynamic;
 }
 

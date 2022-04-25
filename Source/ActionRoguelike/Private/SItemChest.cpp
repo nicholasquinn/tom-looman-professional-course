@@ -4,6 +4,7 @@
 #include "SItemChest.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 // Sets default values
@@ -17,12 +18,36 @@ ASItemChest::ASItemChest()
 
 	LidMesh->SetupAttachment(BaseMesh);
 
-	TargetPitch = 110.0f;
+	OpenPitch = 110.0f;
+
+	bIsOpen = false;
+
+	SetReplicates(true);
 }
 
 void ASItemChest::Interact_Implementation(APawn* InstigatorPawn)
 {
-	/* When interacted with, we open the lid to the target pitch. */
+	/* When interacted with, we open/close the lid to the target pitch. */
+	bIsOpen = !bIsOpen;
+	/* Server needs to call toggle lid manually as rep notifies don't run on the server
+	 * automatically. This is because if it's a function that does purely cosmetic things,
+	 * then we don't want it slowing down the server processing. */
+	OnRep_ToggleLid();
+}
+
+
+void ASItemChest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	/* For some reason we don't need to call StaticClass here... */
+	DOREPLIFETIME(ASItemChest, bIsOpen);
+}
+
+/* Called on clients automatically */
+void ASItemChest::OnRep_ToggleLid()
+{
+	const float TargetPitch = bIsOpen ? OpenPitch : 0.0f;
 	LidMesh->SetRelativeRotation(FRotator(TargetPitch, 0, 0));
 }
 
