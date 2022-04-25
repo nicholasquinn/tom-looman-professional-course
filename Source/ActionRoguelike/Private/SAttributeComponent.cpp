@@ -3,6 +3,7 @@
 
 #include "SAttributeComponent.h"
 #include "SGameModeBase.h"
+#include "Net/UnrealNetwork.h"
 
 
 static TAutoConsoleVariable<float> CVar_DamageMultiplier(
@@ -18,6 +19,7 @@ USAttributeComponent::USAttributeComponent()
 	, MaxHealth{100}
 	, LowHealthThreshold{0.5}
 {
+	SetIsReplicatedByDefault(true);
 }
 
 bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth)
@@ -45,10 +47,8 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 	 * and where we were before. */
 	const float TrueDelta = Health - OldHealth;
 
-	/* It is safe to call Broadcast on Multicast Delegates, even if no 
-	 * functions have been bound. Note that we broadcast AFTER health
-	 * has been updated, which is expected by anyone who binds to this. */
-	OnHealthChanged.Broadcast(InstigatorActor, this, Health, TrueDelta);
+	/* Run the broadcast on server (here) and all clients */
+	MulticastOnHealthChanged(InstigatorActor, Health, TrueDelta);
 
 	/* If we are at or below 0HP, and we just took damage (negative delta), we are dead */
 	if (Health <= 0.0f && TrueDelta < 0.0f)
@@ -65,6 +65,11 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 	/* Now we know the true delta, we can return whether we were 
 	 * actually healed or damaged */
 	return TrueDelta != 0.0f;
+}
+
+void USAttributeComponent::MulticastOnHealthChanged_Implementation(AActor* InstigatorActor, float NewHealth, float Delta)
+{
+	OnHealthChanged.Broadcast(InstigatorActor, this, NewHealth, Delta);
 }
 
 bool USAttributeComponent::IsAlive() const
@@ -106,4 +111,12 @@ bool USAttributeComponent::IsActorAlive(AActor* FromActor)
 	UE_LOG(LogTemp, Warning, TEXT("The supplied actor does not have a attribute component. Therefore returning false for IsAlive."))
 	ensure(nullptr); // purposefully want to pause execution here!
 	return false;
+}
+
+void USAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const 
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(USAttributeComponent, Health);
+	DOREPLIFETIME(USAttributeComponent, MaxHealth);
 }

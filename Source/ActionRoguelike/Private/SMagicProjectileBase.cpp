@@ -49,7 +49,7 @@ ASMagicProjectileBase::ASMagicProjectileBase()
 	ImpactShakeInnerRadius = 100;
 	ImpactShakeOuterRadius = 1000;
 
-	SetReplicates(true);
+	//SetReplicates(true);
 }
 
 void ASMagicProjectileBase::PostInitProperties()
