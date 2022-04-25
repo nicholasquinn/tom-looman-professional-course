@@ -25,7 +25,7 @@ USInteractionComponent::USInteractionComponent()
 	/* Set sensible defaults for the query, but these can be overridden in the editor. */
 	QueryLength = 500.0f;	// 5m sweep now that we are going from camera which is further behind player 
 	QueryRadius = 15.0f;	// of 30cm diameter sphere
-	QueryFrequency = 0.3;
+	QueryFrequency = 0.1f;
 	QueryCollisionChannel = ECollisionChannel::ECC_WorldDynamic;
 }
 
@@ -35,11 +35,16 @@ void USInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	/* Set a periodic timer to perform the line trace for interactables in front of you */
-	FTimerHandle TimerHandle_Unused;
-	FTimerDelegate Delegate; 
-	Delegate.BindUFunction(this, "FindBestInteractable");
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Unused, Delegate, QueryFrequency, true);
+	/* Set a periodic timer to perform the line trace for interactables in front of you,
+	 * ONLY on the client who owns the pawn who owns this component. */
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	if (Pawn && Pawn->IsLocallyControlled())
+	{
+		FTimerHandle TimerHandle_Unused;
+		FTimerDelegate Delegate;
+		Delegate.BindUFunction(this, "FindBestInteractable");
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_Unused, Delegate, QueryFrequency, true);
+	}
 }
 
 // Called every frame
@@ -135,8 +140,12 @@ void USInteractionComponent::FindBestInteractable()
 
 void USInteractionComponent::PrimaryInteract()
 {
-	if (!FocusedActor) { return; }
-	APawn* InteractingPawn = Cast<APawn>(GetOwner());
-	ISGameplayInterface::Execute_Interact(FocusedActor, InteractingPawn);
+	ServerInteract(FocusedActor);
 }
 
+void USInteractionComponent::ServerInteract_Implementation(AActor* InFocusedActor)
+{
+	if (!InFocusedActor) { return; }
+	APawn* InteractingPawn = Cast<APawn>(GetOwner());
+	ISGameplayInterface::Execute_Interact(InFocusedActor, InteractingPawn);
+}
