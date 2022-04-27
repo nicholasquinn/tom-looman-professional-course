@@ -9,6 +9,7 @@
 USActionComponent::USActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
 }
 
 void USActionComponent::BeginPlay()
@@ -20,6 +21,11 @@ void USActionComponent::BeginPlay()
 	{
 		AddAction(GetOwner(), ActionClass);
 	}
+}
+
+void USActionComponent::ServerStartAction_Implementation(AActor* Instigator, FName ActionName)
+{
+	StartActionByName(Instigator, ActionName);
 }
 
 void USActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -72,6 +78,14 @@ bool USActionComponent::StartActionByName(AActor* Instigator, FName ActionName)
 			}
 
 			Action->StartAction(Instigator);
+
+			/* if we are a Client */
+			if (!GetOwner()->HasAuthority())
+			{
+				/* Tell the server to run this as well */
+				ServerStartAction(Instigator, ActionName);
+			}
+
 			return true;
 		}
 	}

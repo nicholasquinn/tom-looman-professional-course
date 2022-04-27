@@ -23,7 +23,8 @@ ASPowerupBase::ASPowerupBase()
 
 	CooldownDuration = 10;
 
-	SetReplicates(true);
+	/* In ctor, so set directly as per log warning inside SetReplicates() */
+	bReplicates = true;
 }
 
 void ASPowerupBase::Interact_Implementation(APawn* InstigatorPawn)

@@ -40,6 +40,9 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	UFUNCTION(Server, Reliable)
+	void ServerStartAction(AActor* Instigator, FName ActionName);
+
 	UPROPERTY()
 	TArray<USAction*> Actions;
 

@@ -49,7 +49,13 @@ ASMagicProjectileBase::ASMagicProjectileBase()
 	ImpactShakeInnerRadius = 100;
 	ImpactShakeOuterRadius = 1000;
 
-	//SetReplicates(true);
+	/* As we are in the constructor, we must set bReplicates directly, rather than calling SetReplicates. Otherwise we get
+	 * the following message: "Warning: SetReplicates called on non-initialized actor <Default_Some_Actor_Class_C>. 
+	 * Directly setting bReplicates is the correct procedure for pre-init actors.". This warning comes from within SetReplicates(),
+	 * but I don't actually understand the logic of it. It probably doesn't matter if we don't know the underlying reason, as
+	 * long as we follow the advice. */
+	bReplicates = true;
+
 }
 
 void ASMagicProjectileBase::PostInitProperties()

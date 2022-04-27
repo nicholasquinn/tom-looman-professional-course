@@ -106,7 +106,10 @@ void ASAICharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponen
 
 		// We just died so stop AI logic if it's present
 		AAIController* AIC = Cast<AAIController>(GetController());
-		if (ensure(AIC))
+		/* We don't ensure this AIC because this code will run on clients and they do not have AI Controllers as they
+		 * exist only on the server. Clients only have their player controller. This ensure would therefore always 
+		 * trigger. We could check if (HasAuthority() && ensure(AIC)) if we wanted to though. */
+		if (AIC)
 		{
 			/* If we're possessed by an AI (should be, hence the ensure). Note that this BrainComponent is just a super
 			 * class of the UBehaviorTreeComponent, and we could just get a reference to the BT component instead, but
