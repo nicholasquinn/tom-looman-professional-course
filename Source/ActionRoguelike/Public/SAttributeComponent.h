@@ -79,10 +79,15 @@ public:
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
+	/* TODO: change from reliable to unreliable once disabling input and material cosmetics are decoupled.
+	 * We need this as reliable now because we can't risk the packet dropping and not disabling input */
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnHealthChanged(AActor* InstigatorActor, float NewHealth, float Delta);
+
+	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
 	float Health;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
+	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
 	float MaxHealth;
 
 	/* May want different entities to have different thresholds e.g. for execution etc.

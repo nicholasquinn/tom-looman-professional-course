@@ -25,7 +25,7 @@ public:
 
 	/* Public as the spawner of the widget needs to set this before adding to viewport so it can
 	 * be used in OnConstruct. */
-	UPROPERTY(BlueprintReadOnly, Category = "UI")
+	UPROPERTY(BlueprintReadOnly, Category = "UI", meta=(ExposeOnSpawn=true))
 	AActor* OwningActor;
 
 protected:
