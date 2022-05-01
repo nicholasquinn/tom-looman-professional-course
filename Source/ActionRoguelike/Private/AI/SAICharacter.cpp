@@ -149,10 +149,43 @@ void ASAICharacter::SetTargetActor(AActor* NewTarget)
 		UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();
 		if (ensureMsgf(Blackboard, TEXT("Blackboard asset not set for ASAICharacter.")))
 		{
+			/* Skip if the new target is the same as the existing target */
+			AActor* CurrentTarget = Cast<AActor>(Blackboard->GetValueAsObject("TargetActor"));
+			if (CurrentTarget == NewTarget) { return; }
+
+			/* We have a new target, so play the alert */
+			ShowAlert();
+
 			/* This string should probably be an FNAME member exposed via UPROPERTY at least,
 			 * and better yet would be to use a BlackboardKeySelector, and then access
 			 * the key name field, but this hard-coded way will suffice for now. */
 			Blackboard->SetValueAsObject("TargetActor", NewTarget);
 		}
 	}
+}
+
+void ASAICharacter::ShowAlert()
+{
+	ensure(AlertWidgetClass);
+
+	/* Lazily create an instance of the alert widget and add it to the viewport */
+	if (!AlertWidget)
+	{
+		AlertWidget = Cast<USWorldUserWidget>(CreateWidget(GetWorld(), AlertWidgetClass));
+		if (!ensure(AlertWidget)) { return; }
+		AlertWidget->OwningActor = this;
+		AlertWidget->AddToViewport();
+	}
+
+	/* Show the widget */
+	AlertWidget->SetVisibility(ESlateVisibility::Visible);
+
+	/* Set timer to hide the widget */
+	FTimerHandle Unused;
+	GetWorldTimerManager().SetTimer(Unused, this, &ASAICharacter::HideAlert, 1.0f);
+}
+
+void ASAICharacter::HideAlert()
+{
+	AlertWidget->SetVisibility(ESlateVisibility::Hidden);
 }

@@ -41,6 +41,10 @@ void USActionComponent::AddAction(AActor* InstigatorActor, TSubclassOf<USAction>
 	if (!ensure(ActionClass)) { return; }
 
 	USAction* ActionInstance = NewObject<USAction>(this, ActionClass);
+
+	/* If we already have this action, don't add it. */
+	if (HasAction(ActionInstance->ActionName)) { return; }
+
 	if (ensure(ActionInstance))
 	{
 		Actions.Add(ActionInstance);
@@ -101,6 +105,15 @@ bool USActionComponent::StopActionByName(AActor* Instigator, FName ActionName)
 			Action->StopAction(Instigator);
 			return true;
 		}
+	}
+	return false;
+}
+
+bool USActionComponent::HasAction(FName ActionName)
+{
+	for (USAction* Action : Actions)
+	{
+		if (Action->ActionName == ActionName) { return true; }
 	}
 	return false;
 }

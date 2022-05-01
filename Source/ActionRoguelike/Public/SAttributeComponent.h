@@ -10,7 +10,7 @@
  * dynamic (can be serialized and have its bound functions found by name) multicast (can have
  * many functions bound to it, but no return value) delegate with four parameters. */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
-	FOnHealthChanged, AActor*, InstigatorActor, class USAttributeComponent*, OwningComponent, float, NewHealth, float, Delta
+	FOnAttributeChanged, AActor*, InstigatorActor, class USAttributeComponent*, OwningComponent, float, NewValue, float, Delta
 );
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -47,6 +47,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Attributes")
 	bool ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth);
 
+	UFUNCTION(BlueprintCallable, Category = "Attributes|Rage")
+	bool ConsumeRage(float RageAmount);
+
+	UFUNCTION(BlueprintPure, Category = "Attributes|Rage")
+	float GetRage() { return Rage; }
+
 	/* This is an actual instance of the FOnHealthChanged delegate/event/broadcaster
 	 * to which we can bind to via blueprints. Even if it was in the protected
 	 * section, because it is BlueprintAssignable, we could still assign to this
@@ -57,7 +63,10 @@ public:
 	 * this is an instance of the delegate, and other instances calling broadcast
 	 * wont cause this one's subscribers to be notified - they are separate. */
 	UPROPERTY(BlueprintAssignable)
-	FOnHealthChanged OnHealthChanged;
+	FOnAttributeChanged OnHealthChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChanged OnRageChanged;
 
 	UFUNCTION(BlueprintPure)
 	bool IsAlive() const;
@@ -99,6 +108,15 @@ protected:
 		meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0")
 	)
 	float LowHealthThreshold;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attributes|Rage")
+	float Rage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Rage")
+	float MaxRage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Rage")
+	float DamageToRageFraction;
 
 private:	
 

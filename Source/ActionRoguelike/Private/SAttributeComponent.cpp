@@ -17,7 +17,10 @@ static TAutoConsoleVariable<float> CVar_DamageMultiplier(
 USAttributeComponent::USAttributeComponent()
 	: Health{100}
 	, MaxHealth{100}
-	, LowHealthThreshold{0.5}
+	, LowHealthThreshold{ 0.5 }
+	, Rage{0.0f}
+	, MaxRage{50.0f}
+	, DamageToRageFraction {0.2f}
 {
 	SetIsReplicatedByDefault(true);
 }
@@ -34,7 +37,7 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 		return false;
 	}
 
-	/* Before calculating damage, apply damage multiplier. Note the damage multipler is only
+	/* Before calculating damage, apply damage multiplier. Note the damage multiplier is only
 	 * applied if this is a damaging event */
 	if (DeltaHealth < 0.0f)
 	{
@@ -46,6 +49,15 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 	/* The true health difference is the difference between where we are now,
 	 * and where we were before. */
 	const float TrueDelta = Health - OldHealth;
+
+	/* Now we know the true delta, we can calculate the amount of rage this damage produces */
+	if (TrueDelta < 0.0f) // if it's damage, not heal
+	{
+		const float OldRage = Rage;
+		Rage = FMath::Clamp(Rage + FMath::Abs(TrueDelta) * DamageToRageFraction, 0.0f, MaxRage);
+		const float RageDelta = Rage - OldRage;
+		OnRageChanged.Broadcast(InstigatorActor, this, Rage, RageDelta);
+	}
 
 	/* Run the broadcast on server (here) and all clients */
 	MulticastOnHealthChanged(InstigatorActor, Health, TrueDelta);
@@ -65,6 +77,14 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 	/* Now we know the true delta, we can return whether we were 
 	 * actually healed or damaged */
 	return TrueDelta != 0.0f;
+}
+
+
+bool USAttributeComponent::ConsumeRage(float RageAmount)
+{
+	if (RageAmount > Rage) return false;
+	Rage -= RageAmount;
+	return true;
 }
 
 void USAttributeComponent::MulticastOnHealthChanged_Implementation(AActor* InstigatorActor, float NewHealth, float Delta)

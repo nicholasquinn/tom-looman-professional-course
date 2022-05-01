@@ -18,6 +18,7 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 	OwningActionComp->ActiveGameplayTags.AppendTags(GrantsTags);
 
 	bIsRunning = true;
+	// did I think this was a ctor? why did it set bAutoStart here?
 	bAutoStart = false; // The majority of actions are started by input, not automatically 
 }
 

@@ -48,6 +48,15 @@ protected:
 
 	void SetTargetActor(AActor* NewTarget);
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> AlertWidgetClass;
+
+	class USWorldUserWidget* AlertWidget;
+
+	void ShowAlert();
+	void HideAlert();
+
 private:
 
+	
 };
