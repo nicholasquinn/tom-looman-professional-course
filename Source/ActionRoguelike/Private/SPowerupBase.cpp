@@ -59,4 +59,6 @@ void ASPowerupBase::EnablePowerup_Implementation()
 	RootComponent->SetVisibility(true, true);
 	// SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	SetActorEnableCollision(true);
+
+	bConsumed = false;
 }

@@ -5,6 +5,7 @@
 
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/SizeBox.h"
 
 
 void USWorldUserWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -29,6 +30,6 @@ void USWorldUserWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 		 * it expects by default. GetViewportScale will return 1 if we are on 1920x1080, but could be greater
 		 * or lesser for other screen sizes. */
 		ScreenPosition /= UWidgetLayoutLibrary::GetViewportScale(GetWorld());
-		SetRenderTranslation(ScreenPosition);
+		ParentSizeBox->SetRenderTranslation(ScreenPosition);
 	}
 }
