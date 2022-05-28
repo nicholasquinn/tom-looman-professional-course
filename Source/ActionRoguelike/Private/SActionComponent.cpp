@@ -4,6 +4,7 @@
 #include "SActionComponent.h"
 
 #include "SAction.h"
+#include "../ActionRoguelike.h"
 
 
 USActionComponent::USActionComponent()
@@ -32,8 +33,21 @@ void USActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	FString Msg = GetNameSafe(GetOwner()) + " : " + ActiveGameplayTags.ToStringSimple();
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, Msg);
+	//FString Msg = GetNameSafe(GetOwner()) + " : " + ActiveGameplayTags.ToStringSimple();
+	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, Msg);
+
+	for (USAction* Action : Actions)
+	{
+		FColor TextColor = Action->GetIsRunning() ? FColor::Blue : FColor::White;
+		FString ActionLogString = FString::Printf(TEXT("[%s] Action = %s | bIsRunning = %s | Outer = %s"),
+			*GetNameSafe(GetOwner()),
+			*Action->ActionName.ToString(),
+			Action->GetIsRunning() ? TEXT("Yes") : TEXT("No"),
+			*GetNameSafe(GetOuter())
+		);
+		// Tick log, so duration must be 0.0f so as not to spam the screen
+		MultiplayerScreenLog(this, ActionLogString, TextColor, 0.0f);
+	}
 }
 
 void USActionComponent::AddAction(AActor* InstigatorActor, TSubclassOf<USAction> ActionClass)

@@ -4,11 +4,14 @@
 #include "SAction.h"
 
 #include <SActionComponent.h>
+#include "../ActionRoguelike.h"
 
 
 void USAction::StartAction_Implementation(AActor* Instigator)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s is starting action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("%s is starting action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	const FString LogText = FString::Printf(TEXT("%s is starting action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	MultiplayerScreenLog(this, LogText, FColor::Orange);
 
 	ensureAlways(!bIsRunning); // If we're trying to start something that's already running, something's gone wrong
 
@@ -24,7 +27,9 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 
 void USAction::StopAction_Implementation(AActor* Instigator)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s is stopping action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("%s is stopping action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	const FString LogText = FString::Printf(TEXT("%s is stopping action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	MultiplayerScreenLog(this, LogText, FColor::Orange);
 
 	ensureAlways(bIsRunning); // if we are trying to stop something that isn't running, something has gone wrong
 
