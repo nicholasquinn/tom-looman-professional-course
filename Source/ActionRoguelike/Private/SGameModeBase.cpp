@@ -20,7 +20,7 @@
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
 	TEXT("su.SpawnBots"),
-	true,
+	false,
 	TEXT("Determines whether bots will spawn or not."),
 	ECVF_Cheat /* Enum Console Variable Flags :: Cheat */
 );

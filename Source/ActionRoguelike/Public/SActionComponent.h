@@ -39,6 +39,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Actions")
 	bool HasAction(FName ActionName);
 
+	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -46,7 +48,9 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerStartAction(AActor* Instigator, FName ActionName);
 
-	UPROPERTY()
+	/* Setting replicated on UObject types isn't enough to get them to replicate. You also
+	 * must override IsSupportedForNetworking in the UObject derived class itself. */
+	UPROPERTY(Replicated)
 	TArray<USAction*> Actions;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Actions")
