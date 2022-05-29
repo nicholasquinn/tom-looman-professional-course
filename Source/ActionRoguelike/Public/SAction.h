@@ -18,6 +18,14 @@ class ACTIONROGUELIKE_API USAction : public UObject
 	
 public:
 
+	/* This function should be used to create USAction components as it sets
+	 * members as well. */
+	static USAction* New(
+		AActor* OwningActor,
+		USActionComponent* OwningActionComponent, 
+		TSubclassOf<USAction> ActionClass
+	);
+
 	UFUNCTION(BlueprintPure, Category = "Action")
 	class USActionComponent* GetOwningComponent() const;
 
@@ -42,6 +50,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Action")
 	FName ActionName;
 
+	virtual bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
+
 protected:
 
 	/* This action cannot run if any of these tags exist in the action component's active tags container. */
@@ -52,7 +65,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer GrantsTags;
 
+	UPROPERTY(ReplicatedUsing="OnRep_IsRunning")
 	bool bIsRunning = false;
+
+	UFUNCTION()
+	void OnRep_IsRunning();
+
+	UPROPERTY(Replicated)
+	USActionComponent* OwningActionComponent;
 
 private:
 
