@@ -48,6 +48,9 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerStartAction(AActor* Instigator, FName ActionName);
 
+	UFUNCTION(Server, Reliable)
+	void ServerStopAction(AActor* Instigator, FName ActionName);
+
 	/* Setting replicated on UObject types isn't enough to get them to replicate. You also
 	 * must override IsSupportedForNetworking in the UObject derived class itself. */
 	UPROPERTY(Replicated)

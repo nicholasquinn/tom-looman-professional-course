@@ -72,7 +72,7 @@ void ASMagicProjectile::OnOverlapTryDamageOtherActor
 	/* New implementation using the GameplayFunctionLibrary */
 	if (USGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, Damage, SweepResult))
 	{
-		if (ActionComponent)
+		if (ActionComponent && HasAuthority())
 		{
 			for (TSubclassOf<USActionEffect> ActionEffect : ActionEffectClasses)
 			{
