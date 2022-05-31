@@ -45,11 +45,9 @@ void USActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	for (USAction* Action : Actions)
 	{
 		FColor TextColor = Action->GetIsRunning() ? FColor::Blue : FColor::White;
-		FString ActionLogString = FString::Printf(TEXT("[%s] Action = %s | bIsRunning = %s | Outer = %s"),
+		FString ActionLogString = FString::Printf(TEXT("[%s] Action = %s"),
 			*GetNameSafe(GetOwner()),
-			*Action->ActionName.ToString(),
-			Action->GetIsRunning() ? TEXT("Yes") : TEXT("No"),
-			*GetNameSafe(Action->GetOuter())
+			*GetNameSafe(Action)
 		);
 		// Tick log, so duration must be 0.0f so as not to spam the screen
 		MultiplayerScreenLog(this, ActionLogString, TextColor, 0.0f);

@@ -10,9 +10,9 @@
 
 void USAction::StartAction_Implementation(AActor* Instigator)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("%s is starting action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
-	const FString LogText = FString::Printf(TEXT("%s is starting action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
-	MultiplayerScreenLog(this, LogText, FColor::Orange);
+	UE_LOG(LogTemp, Warning, TEXT("%s is starting action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	//const FString LogText = FString::Printf(TEXT("%s is starting action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	//MultiplayerScreenLog(this, LogText, FColor::Orange);
 
 	//ensureAlways(!bIsRunning); // If we're trying to start something that's already running, something's gone wrong
 
@@ -21,16 +21,17 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 	ensure(OwningActionComp);
 	OwningActionComp->ActiveGameplayTags.AppendTags(GrantsTags);
 
-	bIsRunning = true;
+	RepData.bIsRunning = true;
+	RepData.Instigator = Instigator;
 	// did I think this was a ctor? why did it set bAutoStart here?
 	bAutoStart = false; // The majority of actions are started by input, not automatically 
 }
 
 void USAction::StopAction_Implementation(AActor* Instigator)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("%s is stopping action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
-	const FString LogText = FString::Printf(TEXT("%s is stopping action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
-	MultiplayerScreenLog(this, LogText, FColor::Orange);
+	UE_LOG(LogTemp, Warning, TEXT("%s is stopping action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	//const FString LogText = FString::Printf(TEXT("%s is stopping action %s"), *GetNameSafe(Instigator), *ActionName.ToString());
+	//MultiplayerScreenLog(this, LogText, FColor::Orange);
 
 	//ensureAlways(bIsRunning); // if we are trying to stop something that isn't running, something has gone wrong
 
@@ -39,7 +40,8 @@ void USAction::StopAction_Implementation(AActor* Instigator)
 	ensure(OwningActionComp);
 	OwningActionComp->ActiveGameplayTags.RemoveTags(GrantsTags);
 
-	bIsRunning = false;
+	RepData.bIsRunning = false;
+	RepData.Instigator = Instigator;
 }
 
 USAction* USAction::New(
@@ -67,7 +69,7 @@ USActionComponent* USAction::GetOwningComponent() const
 
 bool USAction::CanStart_Implementation(AActor* Instigator)
 {
-	return !GetOwningComponent()->ActiveGameplayTags.HasAny(BlockedTags) && !bIsRunning;
+	return !GetOwningComponent()->ActiveGameplayTags.HasAny(BlockedTags) && !RepData.bIsRunning;
 }
 
 /* An Actor is something that is placed in the world. UObjects however are not themselves
@@ -88,18 +90,18 @@ UWorld* USAction::GetWorld() const
 
 bool USAction::GetIsRunning() const
 {
-	return bIsRunning;
+	return RepData.bIsRunning;
 }
 
-void USAction::OnRep_IsRunning()
+void USAction::OnRep_RepData()
 {
-	if (bIsRunning)
+	if (RepData.bIsRunning)
 	{
-		StartAction(nullptr);
+		StartAction(RepData.Instigator);
 	}
 	else
 	{
-		StopAction(nullptr);
+		StopAction(RepData.Instigator);
 	}
 }
 
@@ -107,7 +109,7 @@ void USAction::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(USAction, bIsRunning);
+	DOREPLIFETIME(USAction, RepData);
 	DOREPLIFETIME(USAction, OwningActionComponent);
 }
 

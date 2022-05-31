@@ -29,17 +29,22 @@ void USActionProjectile::StartAction_Implementation(AActor* Instigator)
 			CastEffect, Character->GetMesh(), MuzzleName, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget
 		);
 
-		/* Start a timer for actually spawning the projectile once the casting animation is complete.
-		 * Animation notifies would probably be better for this. */
-		FTimerDelegate CastDelegate;
-		CastDelegate.BindUFunction(this, "OnCastTimerElapsed", Character);
-		GetWorld()->GetTimerManager().SetTimer(CastTimerHandle, CastDelegate, CastTimerDuration, false);
+		if (Instigator->HasAuthority())
+		{
+			/* Start a timer for actually spawning the projectile once the casting animation is complete.
+			 * Animation notifies would probably be better for this. */
+			FTimerDelegate CastDelegate;
+			CastDelegate.BindUFunction(this, "OnCastTimerElapsed", Character);
+			GetWorld()->GetTimerManager().SetTimer(CastTimerHandle, CastDelegate, CastTimerDuration, false);
+		}
 	}
 }
 
 void USActionProjectile::OnCastTimerElapsed(ACharacter* InstigatorCharacter)
 {
-	ensure(ProjectileClass); ensure(InstigatorCharacter);
+	ensure(ProjectileClass); 
+	ensure(InstigatorCharacter); 
+	ensure(InstigatorCharacter->HasAuthority());
 
 	/* Perform a trace to try find the aim point. If nothing is hit, then just take
 	 * the end of the trace as the aim point. */
