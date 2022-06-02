@@ -132,6 +132,7 @@ void ASCharacter::OnHealthChanged(AActor* InstigatorActor, class USAttributeComp
 		if (!AttributeComp->IsAlive())
 		{
 			DisableInput(Cast<APlayerController>(GetController()));
+			SetLifeSpan(5.0f);
 		}
 	}
 }
