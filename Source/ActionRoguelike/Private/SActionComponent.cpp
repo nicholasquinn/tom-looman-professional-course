@@ -30,6 +30,11 @@ void USActionComponent::BeginPlay()
 
 }
 
+void USActionComponent::ServerStopAction_Implementation(AActor* Instigator, FName ActionName)
+{
+	StopActionByName(Instigator, ActionName);
+}
+
 void USActionComponent::ServerStartAction_Implementation(AActor* Instigator, FName ActionName)
 {
 	StartActionByName(Instigator, ActionName);
@@ -45,11 +50,9 @@ void USActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	for (USAction* Action : Actions)
 	{
 		FColor TextColor = Action->GetIsRunning() ? FColor::Blue : FColor::White;
-		FString ActionLogString = FString::Printf(TEXT("[%s] Action = %s | bIsRunning = %s | Outer = %s"),
+		FString ActionLogString = FString::Printf(TEXT("[%s] Action = %s"),
 			*GetNameSafe(GetOwner()),
-			*Action->ActionName.ToString(),
-			Action->GetIsRunning() ? TEXT("Yes") : TEXT("No"),
-			*GetNameSafe(Action->GetOuter())
+			*GetNameSafe(Action)
 		);
 		// Tick log, so duration must be 0.0f so as not to spam the screen
 		MultiplayerScreenLog(this, ActionLogString, TextColor, 0.0f);
@@ -58,7 +61,12 @@ void USActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 void USActionComponent::AddAction(AActor* InstigatorActor, TSubclassOf<USAction> ActionClass)
 {
+	/* The reason the ! is outside the ensure is because we want to ensure the condition is true (i.e. our
+	 * assumptions are that we have an ActionClass, InstigatorActor, and that InstigatorActor has 
+	 * authority), but we want to exit when the condition is false i.e. when we don't have an ActionClass */
 	if (!ensure(ActionClass)) { return; }
+	if (!ensure(InstigatorActor)) { return; }
+	if (!ensure(InstigatorActor->HasAuthority())) { return; }
 
 	/* Custom function for creating USAction UObjects as they need some further initialization. */
 	USAction* ActionInstance = USAction::New(GetOwner(), this, ActionClass);
@@ -130,6 +138,10 @@ bool USActionComponent::StopActionByName(AActor* Instigator, FName ActionName)
 	{
 		if (Action && Action->ActionName == ActionName && Action->GetIsRunning())
 		{
+			if (!Instigator->HasAuthority())
+			{
+				ServerStopAction(Instigator, ActionName);
+			}
 			Action->StopAction(Instigator);
 			return true;
 		}

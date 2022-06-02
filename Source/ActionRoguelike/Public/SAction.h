@@ -8,6 +8,27 @@
 #include "SAction.generated.h"
 
 
+/* A struct to bundle all the replication data into a single packet. This is useful
+ * as it guarantees all fields are up to date when an update event comes in as
+ * the struct as a whole is replicated all at once. */
+USTRUCT()
+struct FActionRepData
+{
+	GENERATED_BODY()
+
+	/* Do not need to add Replicated keyword to the UPROPERTY specifiers here.
+	 * The struct variable declared in USAction below, RepData, instead is what
+	 * has the replicated annotation. All fields within a struct are replicated
+	 * by default when the struct itself is replicated. You would have to add
+	 * NotReplicated to the fields below to explicitly tell them not to. */
+
+	UPROPERTY()
+	bool bIsRunning;
+
+	UPROPERTY()
+	AActor* Instigator;
+};
+
 /**
  * 
  */
@@ -65,11 +86,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer GrantsTags;
 
-	UPROPERTY(ReplicatedUsing="OnRep_IsRunning")
-	bool bIsRunning = false;
+	UPROPERTY(ReplicatedUsing = "OnRep_RepData")
+	FActionRepData RepData;
 
 	UFUNCTION()
-	void OnRep_IsRunning();
+	void OnRep_RepData();
 
 	UPROPERTY(Replicated)
 	USActionComponent* OwningActionComponent;

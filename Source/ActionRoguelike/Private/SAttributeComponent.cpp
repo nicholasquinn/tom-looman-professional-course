@@ -45,32 +45,41 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 	}
 
 	const float OldHealth = Health;
-	Health = FMath::Clamp(Health += DeltaHealth, 0.0f, MaxHealth);
+	const float NewHealth = FMath::Clamp(Health += DeltaHealth, 0.0f, MaxHealth);
+
 	/* The true health difference is the difference between where we are now,
-	 * and where we were before. */
-	const float TrueDelta = Health - OldHealth;
+	 * and where we were before. Client needs this to be able to return true/false */
+	const float TrueDelta = NewHealth - OldHealth;
 
-	/* Now we know the true delta, we can calculate the amount of rage this damage produces */
-	if (TrueDelta < 0.0f) // if it's damage, not heal
+	/* Only update the replicated health variable on the server */
+	if (InstigatorActor->HasAuthority())
 	{
-		const float OldRage = Rage;
-		Rage = FMath::Clamp(Rage + FMath::Abs(TrueDelta) * DamageToRageFraction, 0.0f, MaxRage);
-		const float RageDelta = Rage - OldRage;
-		OnRageChanged.Broadcast(InstigatorActor, this, Rage, RageDelta);
-	}
+		/* Must store new health in variable above because client needs to also 
+		 * know the value for the true delta calculation below. */
+		Health = NewHealth;
 
-	/* Run the broadcast on server (here) and all clients */
-	MulticastOnHealthChanged(InstigatorActor, Health, TrueDelta);
-
-	/* If we are at or below 0HP, and we just took damage (negative delta), we are dead */
-	if (Health <= 0.0f && TrueDelta < 0.0f)
-	{
-		/* The attribute component now depends on the ASGameMode. Is there a better
-		 * way of doing this? */
-		ASGameModeBase* GameMode = GetWorld()->GetAuthGameMode<ASGameModeBase>();
-		if (GameMode)
+		/* Now we know the true delta, we can calculate the amount of rage this damage produces */
+		if (TrueDelta < 0.0f) // if it's damage, not heal
 		{
-			GameMode->OnActorKilled(GetOwner(), InstigatorActor);
+			const float OldRage = Rage;
+			Rage = FMath::Clamp(Rage + FMath::Abs(TrueDelta) * DamageToRageFraction, 0.0f, MaxRage);
+			const float RageDelta = Rage - OldRage;
+			OnRageChanged.Broadcast(InstigatorActor, this, Rage, RageDelta);
+		}
+
+		/* Run the broadcast on server (here) and all clients */
+		MulticastOnHealthChanged(InstigatorActor, Health, TrueDelta);
+
+		/* If we are at or below 0HP, and we just took damage (negative delta), we are dead */
+		if (Health <= 0.0f && TrueDelta < 0.0f)
+		{
+			/* The attribute component now depends on the ASGameMode. Is there a better
+			 * way of doing this? */
+			ASGameModeBase* GameMode = GetWorld()->GetAuthGameMode<ASGameModeBase>();
+			if (GameMode)
+			{
+				GameMode->OnActorKilled(GetOwner(), InstigatorActor);
+			}
 		}
 	}
 
