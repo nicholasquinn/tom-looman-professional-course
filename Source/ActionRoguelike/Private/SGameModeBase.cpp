@@ -16,6 +16,9 @@
 #include "SPlayerState.h"
 #include "SHealthPowerup.h"
 #include "SCoin.h"
+#include "Kismet/GameplayStatics.h"
+#include "SSaveGame.h"
+#include "Logging/LogVerbosity.h"
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -31,8 +34,10 @@ ASGameModeBase::ASGameModeBase()
 	DefaultBotSpawnLimit = 10;
 	NumPowerupsToSpawn = 30;
 
-	// Since we aren't making a blueprint child of ASPlayerState, we can set it on the gamemode via C++
+	// Since we aren't making a blueprint child of ASPlayerState, we can set it on the game mode via C++
 	PlayerStateClass = ASPlayerState::StaticClass();
+
+	SaveSlotName = TEXT("SaveSlot01");
 }
 
 void ASGameModeBase::StartPlay()
@@ -79,6 +84,36 @@ void ASGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("%s was killed by %s"), *GetNameSafe(Victim), *GetNameSafe(Killer));
+}
+
+void ASGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+	ReadSaveGame();
+}
+
+void ASGameModeBase::WriteSaveGame()
+{
+	UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SaveSlotName, 0);
+}
+
+void ASGameModeBase::ReadSaveGame()
+{
+	/* If there is a pre-existing save game with this name, then get it */
+	if (UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
+	{
+		CurrentSaveGame = Cast<USSaveGame>(UGameplayStatics::LoadGameFromSlot(SaveSlotName, 0));
+		const FString Msg = CurrentSaveGame 
+			? TEXT("Successfully read in save game") : TEXT("Failed to read in save game");
+		UE_LOG(LogTemp, Display, TEXT("%s"), *Msg);
+		return;
+	}
+	
+	/* Otherwise create a new save game */
+	CurrentSaveGame = Cast<USSaveGame>(UGameplayStatics::CreateSaveGameObject(USSaveGame::StaticClass()));
+	const FString Msg = CurrentSaveGame ?
+		TEXT("Successfully created new save game object") : TEXT("Failed to create new save game object");
+	UE_LOG(LogTemp, Display, TEXT("%s"), *Msg);
 }
 
 void ASGameModeBase::SpawnBotTimerElapsed()

@@ -24,7 +24,25 @@ public:
 
 	virtual void OnActorKilled(AActor* Victim, AActor* Killer);
 
+	/**
+	 * Initialize the game.
+	 * The GameMode's InitGame() event is called before any other functions (including PreInitializeComponents() )
+	 * and is used by the GameMode to initialize parameters and spawn its helper classes.
+	 * @warning: this is called before actors' PreInitializeComponents.
+	 */
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, Category="SaveGame")
+	void WriteSaveGame();
+
+	void ReadSaveGame();
+
 protected:
+
+	UPROPERTY()
+	class USSaveGame* CurrentSaveGame;
+
+	FString SaveSlotName;
 
 	FTimerHandle SpawnBotTimerHandle;
 
