@@ -20,6 +20,7 @@
 #include "SSaveGame.h"
 #include "Logging/LogVerbosity.h"
 #include "GameFramework/GameStateBase.h"
+#include <EngineUtils.h>
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -108,6 +109,19 @@ void ASGameModeBase::WriteSaveGame()
 		}
 	}
 
+	/* Save all actors who implemented the gameplay interface */
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		AActor* Actor = *It;
+		if (Actor->Implements<USGameplayInterface>())
+		{
+			FActorSaveData ActorSaveData;
+			ActorSaveData.Name = Actor->GetName();
+			ActorSaveData.Transform = Actor->GetActorTransform();
+			CurrentSaveGame->SavedActors.Add(ActorSaveData);
+		}
+	}
+
 	UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SaveSlotName, 0);
 }
 
@@ -117,9 +131,32 @@ void ASGameModeBase::ReadSaveGame()
 	if (UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
 	{
 		CurrentSaveGame = Cast<USSaveGame>(UGameplayStatics::LoadGameFromSlot(SaveSlotName, 0));
-		const FString Msg = CurrentSaveGame 
-			? TEXT("Successfully read in save game") : TEXT("Failed to read in save game");
-		UE_LOG(LogTemp, Display, TEXT("%s"), *Msg);
+		if (CurrentSaveGame)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Successfully read in save game, restoring data"));
+
+			/* Get only those actors that are possible matches i.e. implement the interface */
+			TArray<AActor*> GameplayInterfaceActors;
+			UGameplayStatics::GetAllActorsWithInterface(GetWorld(), USGameplayInterface::StaticClass(), GameplayInterfaceActors);
+
+			/* Iterate over the saved actors, considering it is a subset of all actors */
+			for (FActorSaveData& ActorSaveData : CurrentSaveGame->SavedActors)
+			{
+				/* Find the match */
+				for (AActor* Actor : GameplayInterfaceActors)
+				{
+					if (Actor->GetName() == ActorSaveData.Name)
+					{
+						Actor->SetActorTransform(ActorSaveData.Transform);
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Display, TEXT("Failed to read in save game, not restoring data from save"));
+		}
 		return;
 	}
 	
