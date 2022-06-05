@@ -26,10 +26,12 @@ public:
 	/** Returns the properties used for network replication, this needs to be overridden by all actor classes with native replicated properties */
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	void OnActorLoaded_Implementation();
+
 protected:
 
 	/* RepNotify */
-	UPROPERTY(ReplicatedUsing = "OnRep_ToggleLid", BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing = "OnRep_ToggleLid", BlueprintReadOnly, SaveGame)
 	bool bIsOpen;
 
 	UFUNCTION()

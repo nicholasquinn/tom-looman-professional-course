@@ -44,9 +44,17 @@ void ASItemChest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(ASItemChest, bIsOpen);
 }
 
+
+void ASItemChest::OnActorLoaded_Implementation()
+{
+	OnRep_ToggleLid();
+}
+
 /* Called on clients automatically */
 void ASItemChest::OnRep_ToggleLid()
 {
+	FString LidStatus = bIsOpen ? TEXT("Open") : TEXT("Closed");
+	UE_LOG(LogTemp, Warning, TEXT("Lid is now %s"), *LidStatus);
 	const float TargetPitch = bIsOpen ? OpenPitch : 0.0f;
 	LidMesh->SetRelativeRotation(FRotator(TargetPitch, 0, 0));
 }

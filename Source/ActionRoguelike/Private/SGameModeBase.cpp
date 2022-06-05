@@ -21,6 +21,9 @@
 #include "Logging/LogVerbosity.h"
 #include "GameFramework/GameStateBase.h"
 #include <EngineUtils.h>
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "Serialization/MemoryWriter.h"
+#include "SGameplayInterface.h"
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -96,6 +99,8 @@ void ASGameModeBase::InitGame(const FString& MapName, const FString& Options, FS
 
 void ASGameModeBase::WriteSaveGame()
 {
+	CurrentSaveGame->SavedActors.Empty();
+
 	/* Single player save game functionality - does not work for multiplayer, would need to add an
 	 * array of PlayerCredit structs into USSaveGame, which stores a player id and the number of
 	 * credits for that player. For now, we just save whatever happens to be the first player. */
@@ -118,6 +123,16 @@ void ASGameModeBase::WriteSaveGame()
 			FActorSaveData ActorSaveData;
 			ActorSaveData.Name = Actor->GetName();
 			ActorSaveData.Transform = Actor->GetActorTransform();
+
+			/* Serialize this actor's SaveData members to the ActorSaveData's buffer of bytes */
+
+			// create a memory writer that will write to said buffer of bytes
+			FMemoryWriter MemoryWriter(ActorSaveData.Bytes);
+			FObjectAndNameAsStringProxyArchive ProxyArchive(MemoryWriter, true);
+			// the archive is for a save game, meaning it will look for members marked up with SaveGame
+			ProxyArchive.ArIsSaveGame = true;
+			Actor->Serialize(ProxyArchive);
+
 			CurrentSaveGame->SavedActors.Add(ActorSaveData);
 		}
 	}
@@ -148,6 +163,16 @@ void ASGameModeBase::ReadSaveGame()
 					if (Actor->GetName() == ActorSaveData.Name)
 					{
 						Actor->SetActorTransform(ActorSaveData.Transform);
+
+						FMemoryReader MemoryReader(ActorSaveData.Bytes);
+						FObjectAndNameAsStringProxyArchive ProxyArchive(MemoryReader, true);
+						ProxyArchive.ArIsSaveGame = true;
+						// with the reader, serialize will actually de-serialize the bytes back into
+						// the actor's member variables
+						Actor->Serialize(ProxyArchive);
+
+						ISGameplayInterface::Execute_OnActorLoaded(Actor);
+
 						break;
 					}
 				}
