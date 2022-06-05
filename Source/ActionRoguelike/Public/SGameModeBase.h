@@ -37,6 +37,10 @@ public:
 
 	void ReadSaveGame();
 
+	/* Need to override the _Implementation considering it is a blueprint native event. Don't want to override
+	 * the thunk that handles calling the correct version of the actual implementation. */
+	void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+
 protected:
 
 	UPROPERTY()

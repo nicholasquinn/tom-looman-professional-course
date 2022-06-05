@@ -2,6 +2,7 @@
 
 
 #include "SPlayerState.h"
+#include "SSaveGame.h"
 
 ASPlayerState::ASPlayerState()
 {
@@ -30,4 +31,14 @@ bool ASPlayerState::RemoveCredits(int32 NumCredits)
 int32 ASPlayerState::GetCredits()
 {
 	return Credits;
+}
+
+void ASPlayerState::SavePlayerState_Implementation(USSaveGame* SaveGame)
+{	
+	if (SaveGame) { SaveGame->Credits = Credits; }
+}
+
+void ASPlayerState::LoadPlayerState_Implementation(USSaveGame* SaveGame)
+{
+	if (SaveGame) { Credits = SaveGame->Credits; }
 }

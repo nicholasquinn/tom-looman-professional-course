@@ -19,6 +19,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "SSaveGame.h"
 #include "Logging/LogVerbosity.h"
+#include "GameFramework/GameStateBase.h"
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -94,6 +95,19 @@ void ASGameModeBase::InitGame(const FString& MapName, const FString& Options, FS
 
 void ASGameModeBase::WriteSaveGame()
 {
+	/* Single player save game functionality - does not work for multiplayer, would need to add an
+	 * array of PlayerCredit structs into USSaveGame, which stores a player id and the number of
+	 * credits for that player. For now, we just save whatever happens to be the first player. */
+	for (APlayerState* PlayerState : GameState->PlayerArray)
+	{
+		ASPlayerState* SPlayerState = Cast<ASPlayerState>(PlayerState);
+		if (SPlayerState)
+		{
+			SPlayerState->SavePlayerState(CurrentSaveGame);
+			break;
+		}
+	}
+
 	UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SaveSlotName, 0);
 }
 
@@ -114,6 +128,18 @@ void ASGameModeBase::ReadSaveGame()
 	const FString Msg = CurrentSaveGame ?
 		TEXT("Successfully created new save game object") : TEXT("Failed to create new save game object");
 	UE_LOG(LogTemp, Display, TEXT("%s"), *Msg);
+}
+
+void ASGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+	/* Need to call the implementation in the parent class. Calling the thunk will lead to 
+	 * an infinite loop of calling thunk->this->thunk->this. */
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+
+	if (ASPlayerState* NewPlayerState = NewPlayer->GetPlayerState<ASPlayerState>())
+	{
+		NewPlayerState->LoadPlayerState(CurrentSaveGame);
+	}
 }
 
 void ASGameModeBase::SpawnBotTimerElapsed()
