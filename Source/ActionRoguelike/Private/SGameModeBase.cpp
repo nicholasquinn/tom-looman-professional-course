@@ -16,6 +16,14 @@
 #include "SPlayerState.h"
 #include "SHealthPowerup.h"
 #include "SCoin.h"
+#include "Kismet/GameplayStatics.h"
+#include "SSaveGame.h"
+#include "Logging/LogVerbosity.h"
+#include "GameFramework/GameStateBase.h"
+#include <EngineUtils.h>
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "Serialization/MemoryWriter.h"
+#include "SGameplayInterface.h"
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -31,8 +39,10 @@ ASGameModeBase::ASGameModeBase()
 	DefaultBotSpawnLimit = 10;
 	NumPowerupsToSpawn = 30;
 
-	// Since we aren't making a blueprint child of ASPlayerState, we can set it on the gamemode via C++
+	// Since we aren't making a blueprint child of ASPlayerState, we can set it on the game mode via C++
 	PlayerStateClass = ASPlayerState::StaticClass();
+
+	SaveSlotName = TEXT("SaveSlot01");
 }
 
 void ASGameModeBase::StartPlay()
@@ -79,6 +89,119 @@ void ASGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("%s was killed by %s"), *GetNameSafe(Victim), *GetNameSafe(Killer));
+}
+
+void ASGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+	ReadSaveGame();
+}
+
+void ASGameModeBase::WriteSaveGame()
+{
+	CurrentSaveGame->SavedActors.Empty();
+
+	/* Single player save game functionality - does not work for multiplayer, would need to add an
+	 * array of PlayerCredit structs into USSaveGame, which stores a player id and the number of
+	 * credits for that player. For now, we just save whatever happens to be the first player. */
+	for (APlayerState* PlayerState : GameState->PlayerArray)
+	{
+		ASPlayerState* SPlayerState = Cast<ASPlayerState>(PlayerState);
+		if (SPlayerState)
+		{
+			SPlayerState->SavePlayerState(CurrentSaveGame);
+			break;
+		}
+	}
+
+	/* Save all actors who implemented the gameplay interface */
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		AActor* Actor = *It;
+		if (Actor->Implements<USGameplayInterface>())
+		{
+			FActorSaveData ActorSaveData;
+			ActorSaveData.Name = Actor->GetName();
+			ActorSaveData.Transform = Actor->GetActorTransform();
+
+			/* Serialize this actor's SaveData members to the ActorSaveData's buffer of bytes */
+
+			// create a memory writer that will write to said buffer of bytes
+			FMemoryWriter MemoryWriter(ActorSaveData.Bytes);
+			FObjectAndNameAsStringProxyArchive ProxyArchive(MemoryWriter, true);
+			// the archive is for a save game, meaning it will look for members marked up with SaveGame
+			ProxyArchive.ArIsSaveGame = true;
+			Actor->Serialize(ProxyArchive);
+
+			CurrentSaveGame->SavedActors.Add(ActorSaveData);
+		}
+	}
+
+	UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SaveSlotName, 0);
+}
+
+void ASGameModeBase::ReadSaveGame()
+{
+	/* If there is a pre-existing save game with this name, then get it */
+	if (UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
+	{
+		CurrentSaveGame = Cast<USSaveGame>(UGameplayStatics::LoadGameFromSlot(SaveSlotName, 0));
+		if (CurrentSaveGame)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Successfully read in save game, restoring data"));
+
+			/* Get only those actors that are possible matches i.e. implement the interface */
+			TArray<AActor*> GameplayInterfaceActors;
+			UGameplayStatics::GetAllActorsWithInterface(GetWorld(), USGameplayInterface::StaticClass(), GameplayInterfaceActors);
+
+			/* Iterate over the saved actors, considering it is a subset of all actors */
+			for (FActorSaveData& ActorSaveData : CurrentSaveGame->SavedActors)
+			{
+				/* Find the match */
+				for (AActor* Actor : GameplayInterfaceActors)
+				{
+					if (Actor->GetName() == ActorSaveData.Name)
+					{
+						Actor->SetActorTransform(ActorSaveData.Transform);
+
+						FMemoryReader MemoryReader(ActorSaveData.Bytes);
+						FObjectAndNameAsStringProxyArchive ProxyArchive(MemoryReader, true);
+						ProxyArchive.ArIsSaveGame = true;
+						// with the reader, serialize will actually de-serialize the bytes back into
+						// the actor's member variables
+						Actor->Serialize(ProxyArchive);
+
+						ISGameplayInterface::Execute_OnActorLoaded(Actor);
+
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Display, TEXT("Failed to read in save game, not restoring data from save"));
+		}
+		return;
+	}
+	
+	/* Otherwise create a new save game */
+	CurrentSaveGame = Cast<USSaveGame>(UGameplayStatics::CreateSaveGameObject(USSaveGame::StaticClass()));
+	const FString Msg = CurrentSaveGame ?
+		TEXT("Successfully created new save game object") : TEXT("Failed to create new save game object");
+	UE_LOG(LogTemp, Display, TEXT("%s"), *Msg);
+}
+
+void ASGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+	/* Need to call the implementation in the parent class. Calling the thunk will lead to 
+	 * an infinite loop of calling thunk->this->thunk->this. */
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+
+	if (ASPlayerState* NewPlayerState = NewPlayer->GetPlayerState<ASPlayerState>())
+	{
+		NewPlayerState->LoadPlayerState(CurrentSaveGame);
+	}
 }
 
 void ASGameModeBase::SpawnBotTimerElapsed()

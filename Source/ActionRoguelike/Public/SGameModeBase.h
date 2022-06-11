@@ -24,7 +24,29 @@ public:
 
 	virtual void OnActorKilled(AActor* Victim, AActor* Killer);
 
+	/**
+	 * Initialize the game.
+	 * The GameMode's InitGame() event is called before any other functions (including PreInitializeComponents() )
+	 * and is used by the GameMode to initialize parameters and spawn its helper classes.
+	 * @warning: this is called before actors' PreInitializeComponents.
+	 */
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, Category="SaveGame")
+	void WriteSaveGame();
+
+	void ReadSaveGame();
+
+	/* Need to override the _Implementation considering it is a blueprint native event. Don't want to override
+	 * the thunk that handles calling the correct version of the actual implementation. */
+	void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+
 protected:
+
+	UPROPERTY()
+	class USSaveGame* CurrentSaveGame;
+
+	FString SaveSlotName;
 
 	FTimerHandle SpawnBotTimerHandle;
 
