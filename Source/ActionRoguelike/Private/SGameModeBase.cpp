@@ -194,14 +194,18 @@ void ASGameModeBase::ReadSaveGame()
 
 void ASGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
-	/* Need to call the implementation in the parent class. Calling the thunk will lead to 
-	 * an infinite loop of calling thunk->this->thunk->this. */
-	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-
 	if (ASPlayerState* NewPlayerState = NewPlayer->GetPlayerState<ASPlayerState>())
 	{
 		NewPlayerState->LoadPlayerState(CurrentSaveGame);
 	}
+
+	/* Need to call the implementation in the parent class. Calling the thunk will lead to
+	 * an infinite loop of calling thunk->this->thunk->this. Also note we load up our player
+	 * state before calling this super version, as this super version will eventually call
+	 * APlayerController::BeginPlayingState, which we have overridden in our player controller
+	 * to build the UI. Hence for the UI to reflect what has been loaded from disk, we must
+	 * restore it (as above) before calling this super version of the function. */
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 }
 
 void ASGameModeBase::SpawnBotTimerElapsed()

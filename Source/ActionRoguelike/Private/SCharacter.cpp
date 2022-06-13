@@ -131,6 +131,7 @@ void ASCharacter::OnHealthChanged(AActor* InstigatorActor, class USAttributeComp
 		/* and we've died as a result of it */
 		if (!AttributeComp->IsAlive())
 		{
+			AttributeComp->ClearEvents();
 			DisableInput(Cast<APlayerController>(GetController()));
 			SetLifeSpan(5.0f);
 		}

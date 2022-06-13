@@ -6,6 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include <Net/UnrealNetwork.h>
 
 
 // Sets default values
@@ -33,32 +34,32 @@ void ASPowerupBase::Interact_Implementation(APawn* InstigatorPawn)
 	unimplemented();
 }
 
+void ASPowerupBase::OnRep_UpdateState()
+{
+	RootComponent->SetVisibility(!bConsumed, true);
+	SetActorEnableCollision(!bConsumed);
+	if (bConsumed) { UGameplayStatics::PlaySoundAtLocation(this, ConsumeSound, GetActorLocation()); }
+}
+
 void ASPowerupBase::ConsumePowerup_Implementation()
 {
 	if (!bConsumed)
 	{
 		bConsumed = true;
+		OnRep_UpdateState();
 		GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &ASPowerupBase::EnablePowerup, CooldownDuration);
-		DisablePowerup();
-
-		UGameplayStatics::PlaySoundAtLocation(this, ConsumeSound, GetActorLocation());
 	}
-}
-
-void ASPowerupBase::DisablePowerup_Implementation()
-{
-	/* It's best to set visibility and propagate, considering we want to show/hide the whole actor. */
-	RootComponent->SetVisibility(false, true);
-	/* You can actually set collision for the actor as a whole */
-	//SphereComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SetActorEnableCollision(false);
 }
 
 void ASPowerupBase::EnablePowerup_Implementation()
 {
-	RootComponent->SetVisibility(true, true);
-	// SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	SetActorEnableCollision(true);
-
 	bConsumed = false;
+	OnRep_UpdateState();
+}
+
+void ASPowerupBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASPowerupBase, bConsumed);
 }

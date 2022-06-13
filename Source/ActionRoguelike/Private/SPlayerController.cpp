@@ -9,3 +9,9 @@ void ASPlayerController::SetPawn(APawn* InPawn)
 
 	OnPawnChanged.Broadcast(InPawn);
 }
+
+void ASPlayerController::BeginPlayingState()
+{
+	/* Call event in our BP_Character's blueprint graph now that playerstate is ready */
+	BlueprintBeginPlayingState();
+}

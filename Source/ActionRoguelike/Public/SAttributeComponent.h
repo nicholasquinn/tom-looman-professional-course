@@ -44,6 +44,8 @@ public:
 	// Sets default values for this component's properties
 	USAttributeComponent();
 
+	void ClearEvents();
+
 	UFUNCTION(BlueprintCallable, Category="Attributes")
 	bool ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth);
 
@@ -92,6 +94,9 @@ protected:
 	 * We need this as reliable now because we can't risk the packet dropping and not disabling input */
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastOnHealthChanged(AActor* InstigatorActor, float NewHealth, float Delta);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastOnRageChanged(AActor* InstigatorActor, float NewRage, float Delta);
 
 	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
 	float Health;

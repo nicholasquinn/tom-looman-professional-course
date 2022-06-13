@@ -25,6 +25,17 @@ USAttributeComponent::USAttributeComponent()
 	SetIsReplicatedByDefault(true);
 }
 
+
+void USAttributeComponent::ClearEvents()
+{
+	/* We are dead, clear bindings as we don't want to effect UI. Otherwise, if new pawn spawns
+	 * and our dot-damage is still ticking, it will set the UI to have 0 health, even though
+	 * the new pawn has full health, because these events are bound to the UI and still ticking
+	 * as this instance is from its perspective the old pawn's attribute comp which has 0 HP. */
+	OnHealthChanged.Clear();
+	OnRageChanged.Clear();
+}
+
 bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float DeltaHealth)
 {
 	/* Check if the owning actor is currently invincible. Note that the "God" command will set
@@ -64,7 +75,7 @@ bool USAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delt
 			const float OldRage = Rage;
 			Rage = FMath::Clamp(Rage + FMath::Abs(TrueDelta) * DamageToRageFraction, 0.0f, MaxRage);
 			const float RageDelta = Rage - OldRage;
-			OnRageChanged.Broadcast(InstigatorActor, this, Rage, RageDelta);
+			MulticastOnRageChanged(InstigatorActor, Rage, RageDelta);
 		}
 
 		/* Run the broadcast on server (here) and all clients */
@@ -120,6 +131,12 @@ bool USAttributeComponent::Kill(AActor* InstigatorActor)
 {
 	/* It may already be dead */
 	return ApplyHealthChange(InstigatorActor, -MaxHealth);
+}
+
+
+void USAttributeComponent::MulticastOnRageChanged_Implementation(AActor* InstigatorActor, float NewRage, float Delta)
+{
+	OnRageChanged.Broadcast(InstigatorActor, this, NewRage, Delta);
 }
 
 USAttributeComponent* USAttributeComponent::GetAttributeComponent(AActor* FromActor)

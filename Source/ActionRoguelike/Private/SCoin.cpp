@@ -16,6 +16,7 @@ ASCoin::ASCoin()
 void ASCoin::Interact_Implementation(APawn* InstigatorPawn)
 {
 	ensureAlways(InstigatorPawn);
+	ensureAlways(HasAuthority());
 
 	/* Grant credits to the player who is interacting */
 	if (!bConsumed)
