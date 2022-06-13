@@ -53,6 +53,7 @@ protected:
 
 	class USWorldUserWidget* AlertWidget;
 
+	UFUNCTION(NetMulticast, Unreliable)
 	void ShowAlert();
 	void HideAlert();
 

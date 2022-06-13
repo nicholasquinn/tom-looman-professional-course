@@ -164,7 +164,7 @@ void ASAICharacter::SetTargetActor(AActor* NewTarget)
 	}
 }
 
-void ASAICharacter::ShowAlert()
+void ASAICharacter::ShowAlert_Implementation()
 {
 	ensure(AlertWidgetClass);
 

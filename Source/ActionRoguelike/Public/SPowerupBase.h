@@ -25,10 +25,10 @@ protected:
 	void ConsumePowerup();
 
 	UFUNCTION(BlueprintNativeEvent)
-	void DisablePowerup();
-
-	UFUNCTION(BlueprintNativeEvent)
 	void EnablePowerup();
+
+	UFUNCTION()
+	void OnRep_UpdateState();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UStaticMeshComponent* MeshComp;
@@ -46,6 +46,7 @@ protected:
 
 	/* Need this so you cannot spam interact and cause the interact function to run multiple
 	 * times before it's actually consumed. */
+	UPROPERTY(ReplicatedUsing = "OnRep_UpdateState")
 	bool bConsumed;
 
 private:	

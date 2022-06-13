@@ -39,10 +39,17 @@ public:
 
 protected:
 
+	// turns out OnRep functions can have a parameter, which will be filled by
+	// the engine on replication with the old/previous value
+	UFUNCTION() void OnRep_Credits(int32 OldCredits);
+
+	//UFUNCTION(NetMulticast, Reliable)
+	//void MulticastOnCreditsChanged(int32 NumCredits);
+
 	UPROPERTY(EditAnywhere, Category = "Credits")
 	int32 StartingCredits;
 
-	UPROPERTY(VisibleAnywhere, Category = "Credits")
+	UPROPERTY(ReplicatedUsing="OnRep_Credits", VisibleAnywhere, Category = "Credits")
 	int32 Credits;
 
 	UPROPERTY(BlueprintAssignable, Category = "Credits")

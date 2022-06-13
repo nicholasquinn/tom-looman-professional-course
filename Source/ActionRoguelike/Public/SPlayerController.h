@@ -23,6 +23,12 @@ public:
 
 protected:
 
+	/** Pawn has been possessed, so changing state to NAME_Playing. Start it walking and begin playing with it. */
+	virtual void BeginPlayingState() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void BlueprintBeginPlayingState();
+
 	UPROPERTY(BlueprintAssignable)
 	FOnPawnChanged OnPawnChanged;
 
