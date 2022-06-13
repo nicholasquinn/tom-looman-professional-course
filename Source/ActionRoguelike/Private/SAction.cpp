@@ -27,6 +27,8 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 	bAutoStart = false; // The majority of actions are started by input, not automatically 
 
 	GetOwningComponent()->OnActionStarted.Broadcast(GetOwningComponent(), this);
+
+	TimeStarted = GetWorld()->TimeSeconds;
 }
 
 void USAction::StopAction_Implementation(AActor* Instigator)

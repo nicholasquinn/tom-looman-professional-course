@@ -58,6 +58,13 @@ void USActionEffect::StopAction_Implementation(AActor* Instigator)
 	}
 }
 
+float USActionEffect::GetTimeRemaining() const
+{
+	const float EndTime = TimeStarted + Duration;
+	const float TimeRemaining = EndTime - GetWorld()->TimeSeconds;
+	return TimeRemaining >= 0 ? TimeRemaining : 0.0f;
+}
+
 void USActionEffect::ExecutePeriodicEffect_Implementation(AActor* InstigatorActor)
 {
 
