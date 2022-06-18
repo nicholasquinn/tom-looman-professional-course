@@ -24,6 +24,9 @@ public:
 
 protected:
 
+	UFUNCTION(BlueprintPure)
+	float GetTimeRemaining() const;
+
 	/* The total duration of the effect */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect")
 	float Duration;

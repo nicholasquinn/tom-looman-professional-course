@@ -71,8 +71,9 @@ void USActionComponent::AddAction(AActor* InstigatorActor, TSubclassOf<USAction>
 	/* Custom function for creating USAction UObjects as they need some further initialization. */
 	USAction* ActionInstance = USAction::New(GetOwner(), this, ActionClass);
 
-	/* If we already have this action, don't add it. */
-	if (HasAction(ActionInstance->ActionName)) { return; }
+	/* If we already have this action, don't add it.
+	 * DEPRECATED: We now allow stacking of burning effects etc. */
+	//if (HasAction(ActionInstance->ActionName)) { return; }
 
 	if (ensure(ActionInstance))
 	{

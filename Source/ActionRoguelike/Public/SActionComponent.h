@@ -7,6 +7,8 @@
 #include "GameplayTagContainer.h"
 #include "SActionComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActionStateChange, USActionComponent*, OwningActionComp, USAction*, Action);
+
 class USAction;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -41,6 +43,12 @@ public:
 
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnActionStateChange OnActionStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnActionStateChange OnActionStopped;
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -53,7 +61,7 @@ protected:
 
 	/* Setting replicated on UObject types isn't enough to get them to replicate. You also
 	 * must override IsSupportedForNetworking in the UObject derived class itself. */
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	TArray<USAction*> Actions;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Actions")

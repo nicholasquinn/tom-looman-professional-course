@@ -25,6 +25,13 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 	RepData.Instigator = Instigator;
 	// did I think this was a ctor? why did it set bAutoStart here?
 	bAutoStart = false; // The majority of actions are started by input, not automatically 
+
+	GetOwningComponent()->OnActionStarted.Broadcast(GetOwningComponent(), this);
+
+	if (GetOwningComponent()->GetOwner()->HasAuthority())
+	{
+		TimeStarted = GetWorld()->TimeSeconds;
+	}
 }
 
 void USAction::StopAction_Implementation(AActor* Instigator)
@@ -42,6 +49,8 @@ void USAction::StopAction_Implementation(AActor* Instigator)
 
 	RepData.bIsRunning = false;
 	RepData.Instigator = Instigator;
+
+	GetOwningComponent()->OnActionStopped.Broadcast(GetOwningComponent(), this);
 }
 
 USAction* USAction::New(
@@ -111,5 +120,6 @@ void USAction::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 
 	DOREPLIFETIME(USAction, RepData);
 	DOREPLIFETIME(USAction, OwningActionComponent);
+	DOREPLIFETIME(USAction, TimeStarted);
 }
 
