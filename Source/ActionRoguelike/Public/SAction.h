@@ -98,6 +98,7 @@ protected:
 	UPROPERTY(Replicated)
 	USActionComponent* OwningActionComponent;
 
+	UPROPERTY(Replicated)
 	float TimeStarted;
 
 private:

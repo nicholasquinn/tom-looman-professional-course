@@ -28,7 +28,10 @@ void USAction::StartAction_Implementation(AActor* Instigator)
 
 	GetOwningComponent()->OnActionStarted.Broadcast(GetOwningComponent(), this);
 
-	TimeStarted = GetWorld()->TimeSeconds;
+	if (GetOwningComponent()->GetOwner()->HasAuthority())
+	{
+		TimeStarted = GetWorld()->TimeSeconds;
+	}
 }
 
 void USAction::StopAction_Implementation(AActor* Instigator)
@@ -117,5 +120,6 @@ void USAction::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 
 	DOREPLIFETIME(USAction, RepData);
 	DOREPLIFETIME(USAction, OwningActionComponent);
+	DOREPLIFETIME(USAction, TimeStarted);
 }
 
