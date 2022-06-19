@@ -6,6 +6,8 @@
 #include "SPlayerState.h"
 
 
+#define LOCTEXT_NAMESPACE "InteractableActors"
+
 ASHealthPowerup::ASHealthPowerup()
 {
 	HealAmount = 50.0f;
@@ -55,3 +57,23 @@ void ASHealthPowerup::Interact_Implementation(APawn* InstigatorPawn)
 	 * own the health, to update the health. */
 	AttributeComp->ApplyHealthChange(this, HealAmount);
 }
+
+
+FText ASHealthPowerup::GetInteractionInfo_Implementation(APawn* InstigatorPawn)
+{
+	USAttributeComponent* AttributeComp = Cast<USAttributeComponent>(InstigatorPawn->GetComponentByClass(USAttributeComponent::StaticClass()));
+	if (AttributeComp && AttributeComp->IsFullHealth())
+	{
+		return NSLOCTEXT("InteractableActors", "ASHealthPowerup_FullHealthWarning", "Already at full health");
+	}
+	/* This demonstrates two more things with localizable C++ text
+	 * 1) By defining the namespace for the whole file (see above #define for LOCTEXT_NAMESPACE and #undef below), you can use the
+	 * LOCTEXT macro and not have to specify the namespace every time. 
+	 * 2) You can supply format arguments, but note it's not done with the usual format specifiers, but rather ordinal specifiers */
+	return FText::Format(
+		LOCTEXT("ASHealthPowerup_InteractInfo", "Costs {0} credits, restores {1} health points"),
+		Cost, HealAmount
+	);
+}
+
+#undef LOCTEXT_NAMESPACE
