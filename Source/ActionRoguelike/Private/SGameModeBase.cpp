@@ -25,6 +25,8 @@
 #include <EngineUtils.h>
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 #include "Serialization/MemoryWriter.h"
+#include <../ActionRoguelike.h>
+#include "SActionComponent.h"
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -295,9 +297,21 @@ void ASGameModeBase::OnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Quer
 	}
 	TArray<FMinionInfoRow*> MinionTableRows;
 	MinionTable->GetAllRows("ASGameModeBase::OnBotQueryCompleted", MinionTableRows);
-	TSubclassOf<AActor> MinionClass = MinionTableRows[FMath::RandRange(0, MinionTableRows.Num() - 1)]->MinionData->MinionClass;
+	FMinionInfoRow* RandomlySelectedRow = MinionTableRows[FMath::RandRange(0, MinionTableRows.Num() - 1)];
+	TSubclassOf<AActor> MinionClass = RandomlySelectedRow->MinionData->MinionClass;
 
-	GetWorld()->SpawnActor<AActor>(MinionClass, Locations[0], FRotator::ZeroRotator, ActorSpawnParams);
+	if (AActor* SpawnedBot = GetWorld()->SpawnActor<AActor>(MinionClass, Locations[0], FRotator::ZeroRotator, ActorSpawnParams))
+	{
+		MultiplayerScreenLog(this, FString::Printf(TEXT("Spawned bot %s (%s)"), *GetNameSafe(SpawnedBot), *GetNameSafe(MinionClass)));
+		for (TSubclassOf<USAction> ActionClass : RandomlySelectedRow->MinionData->DefaultActions)
+		{
+			if (USActionComponent* ActionComp
+				= Cast<USActionComponent>(SpawnedBot->GetComponentByClass(USActionComponent::StaticClass())))
+			{
+				ActionComp->AddAction(SpawnedBot, ActionClass);
+			}
+		}
+	}
 	DrawDebugSphere(GetWorld(), Locations[0], 25, 8, FColor::Green, false, BotSpawnInterval);
 }
 
