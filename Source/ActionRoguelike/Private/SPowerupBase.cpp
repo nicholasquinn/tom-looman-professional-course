@@ -34,6 +34,11 @@ void ASPowerupBase::Interact_Implementation(APawn* InstigatorPawn)
 	unimplemented();
 }
 
+FText ASPowerupBase::GetInteractionInfo_Implementation(APawn* InstigatorPawn)
+{
+	return FText::GetEmpty();
+}
+
 void ASPowerupBase::OnRep_UpdateState()
 {
 	RootComponent->SetVisibility(!bConsumed, true);

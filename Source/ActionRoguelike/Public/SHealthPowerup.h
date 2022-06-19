@@ -20,6 +20,8 @@ public:
 
 	virtual void Interact_Implementation(APawn* InstigatorPawn) override;
 
+	virtual FText GetInteractionInfo_Implementation(APawn* InstigatorPawn) override;
+
 protected:
 
 	/* EditAnywhere so that individual health powerups in the map can have different

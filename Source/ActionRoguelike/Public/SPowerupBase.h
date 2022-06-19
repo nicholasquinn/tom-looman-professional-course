@@ -19,6 +19,8 @@ public:
 
 	virtual void Interact_Implementation(APawn* InstigatorPawn) override;
 
+	virtual FText GetInteractionInfo_Implementation(APawn* InstigatorPawn);
+
 protected:
 
 	UFUNCTION(BlueprintNativeEvent)
