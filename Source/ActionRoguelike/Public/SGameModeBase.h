@@ -6,7 +6,43 @@
 #include "GameFramework/GameModeBase.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 #include "SPowerupBase.h"
+#include "Engine/DataTable.h"
 #include "SGameModeBase.generated.h"
+
+
+USTRUCT(BlueprintType)
+struct FMinionInfoRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+
+	FMinionInfoRow()
+		: Weight(1.0f)
+		, SpawnCost(5.0f)
+		, KillCredits(20)
+	{
+
+	}
+
+	// Deprecated in favor of the Data Asset below
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	//TSubclassOf<AActor> MinionClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	class USMinionDataAsset* MinionData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float Weight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float SpawnCost;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 KillCredits;
+
+};
+
 
 /**
  * 
@@ -68,11 +104,15 @@ protected:
 	UFUNCTION() /* Required for delegates bound functions */
 	void OnBotQueryCompleted(class UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
 
-	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	TSubclassOf<AActor> MinionAiClass;
-
 	UFUNCTION() /* Required for delegates bound functions */
 	void OnPowerupQueryFinished(class UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+
+	// Deprecated in favor of MinionTable - see below
+	//UPROPERTY(EditDefaultsOnly, Category = "AI")
+	//TSubclassOf<AActor> MinionAiClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	class UDataTable* MinionTable;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Powerups")
 	class UEnvQuery* GetPowerupSpawnLocationsQuery;

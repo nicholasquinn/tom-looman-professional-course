@@ -7,23 +7,24 @@
 #include "AI/SAICharacter.h"
 #include "SAttributeComponent.h"
 #include "SCharacter.h"
+#include "SGameplayInterface.h"
+#include "SMinionDataAsset.h"
+#include "SPlayerState.h"
+#include "SHealthPowerup.h"
+#include "SCoin.h"
+#include "SSaveGame.h"
 
 // UE files
 #include "DrawDebugHelpers.h"
 #include "EngineUtils.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
-#include "SPlayerState.h"
-#include "SHealthPowerup.h"
-#include "SCoin.h"
 #include "Kismet/GameplayStatics.h"
-#include "SSaveGame.h"
 #include "Logging/LogVerbosity.h"
 #include "GameFramework/GameStateBase.h"
 #include <EngineUtils.h>
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 #include "Serialization/MemoryWriter.h"
-#include "SGameplayInterface.h"
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -285,9 +286,19 @@ void ASGameModeBase::OnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Quer
 	/* We have valid results and aren't at the spawn limit, so spawn the AI at the first result location. */
 	FActorSpawnParameters ActorSpawnParams;
 	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	GetWorld()->SpawnActor<AActor>(MinionAiClass, Locations[0], FRotator::ZeroRotator, ActorSpawnParams);
-	DrawDebugSphere(GetWorld(), Locations[0], 25, 8, FColor::Green, false, BotSpawnInterval);
 
+	/* Get the minion class to spawn from data table */
+	if (!ensure(MinionTable))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot spawn bot as there is no minion table to get bot class from"));
+		return;
+	}
+	TArray<FMinionInfoRow*> MinionTableRows;
+	MinionTable->GetAllRows("ASGameModeBase::OnBotQueryCompleted", MinionTableRows);
+	TSubclassOf<AActor> MinionClass = MinionTableRows[FMath::RandRange(0, MinionTableRows.Num() - 1)]->MinionData->MinionClass;
+
+	GetWorld()->SpawnActor<AActor>(MinionClass, Locations[0], FRotator::ZeroRotator, ActorSpawnParams);
+	DrawDebugSphere(GetWorld(), Locations[0], 25, 8, FColor::Green, false, BotSpawnInterval);
 }
 
 void ASGameModeBase::OnPowerupQueryFinished(class UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
