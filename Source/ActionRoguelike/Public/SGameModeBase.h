@@ -29,8 +29,12 @@ public:
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	//TSubclassOf<AActor> MinionClass;
 
+	// Now also deprecated in favor of using an asset manager asset id
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	//class USMinionDataAsset* MinionData;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	class USMinionDataAsset* MinionData;
+	FPrimaryAssetId MinionId;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float Weight;
@@ -122,6 +126,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Powerups")
 	int32 NumPowerupsToSpawn;
+
+	void OnMinionLoaded(FPrimaryAssetId MinionAssetId, FVector Location);
 
 private:
 

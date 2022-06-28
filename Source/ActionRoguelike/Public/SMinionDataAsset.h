@@ -28,6 +28,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
 	UTexture2D* Icon;
 
+	FPrimaryAssetId GetPrimaryAssetId() const override
+	{
+		// first param: the type specified in the project settings -> asset manager -> primary assets to scan for -> [primary asset name]
+		// second param: the name of this data asset in the content browser (not the class name, but the actual instance name)
+		// together these form a unique id
+		return FPrimaryAssetId("Minions", GetFName());
+	}
+
 protected:
 
 
