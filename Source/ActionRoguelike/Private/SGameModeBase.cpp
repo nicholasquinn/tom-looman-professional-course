@@ -7,23 +7,27 @@
 #include "AI/SAICharacter.h"
 #include "SAttributeComponent.h"
 #include "SCharacter.h"
+#include "SGameplayInterface.h"
+#include "SMinionDataAsset.h"
+#include "SPlayerState.h"
+#include "SHealthPowerup.h"
+#include "SCoin.h"
+#include "SSaveGame.h"
 
 // UE files
 #include "DrawDebugHelpers.h"
 #include "EngineUtils.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
-#include "SPlayerState.h"
-#include "SHealthPowerup.h"
-#include "SCoin.h"
 #include "Kismet/GameplayStatics.h"
-#include "SSaveGame.h"
 #include "Logging/LogVerbosity.h"
 #include "GameFramework/GameStateBase.h"
 #include <EngineUtils.h>
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 #include "Serialization/MemoryWriter.h"
-#include "SGameplayInterface.h"
+#include <../ActionRoguelike.h>
+#include "SActionComponent.h"
+#include "Engine/AssetManager.h"
 
 
 static TAutoConsoleVariable<bool> CVar_SpawnBots(
@@ -282,12 +286,26 @@ void ASGameModeBase::OnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Quer
 	TArray<FVector> Locations;
 	if (!QueryInstance->GetQueryResultsAsLocations(Locations)) { return; }
 
-	/* We have valid results and aren't at the spawn limit, so spawn the AI at the first result location. */
-	FActorSpawnParameters ActorSpawnParams;
-	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	GetWorld()->SpawnActor<AActor>(MinionAiClass, Locations[0], FRotator::ZeroRotator, ActorSpawnParams);
-	DrawDebugSphere(GetWorld(), Locations[0], 25, 8, FColor::Green, false, BotSpawnInterval);
+	/* Get the minion class to spawn from data table */
+	if (!ensure(MinionTable))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot spawn bot as there is no minion table to get bot class from"));
+		return;
+	}
+	TArray<FMinionInfoRow*> MinionTableRows;
+	MinionTable->GetAllRows("ASGameModeBase::OnBotQueryCompleted", MinionTableRows);
+	FMinionInfoRow* RandomlySelectedRow = MinionTableRows[FMath::RandRange(0, MinionTableRows.Num() - 1)];
 
+	UAssetManager* AssetManager = UAssetManager::GetIfValid();
+	if (!ensure(AssetManager))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot spawn bot as the asset manager was unable to be retrieved."));
+		return;
+	}
+
+	TArray<FName> Bundles_Unused;
+	FStreamableDelegate MinionLoadDelegate = FStreamableDelegate::CreateUObject(this, &ASGameModeBase::OnMinionLoaded, RandomlySelectedRow->MinionId, Locations[0]);
+	AssetManager->LoadPrimaryAsset(RandomlySelectedRow->MinionId, Bundles_Unused, MinionLoadDelegate);
 }
 
 void ASGameModeBase::OnPowerupQueryFinished(class UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
@@ -318,6 +336,34 @@ void ASGameModeBase::OnPowerupQueryFinished(class UEnvQueryInstanceBlueprintWrap
 		);
 		Locations.RemoveAt(RandomIndex);
 	}
+}
+
+void ASGameModeBase::OnMinionLoaded(FPrimaryAssetId MinionAssetId, FVector Location)
+{
+	UAssetManager* AssetManager = UAssetManager::GetIfValid();
+	if (!AssetManager) { return; }
+
+	// Now know the asset it loaded (as we are in the load callback), and so now actually get the loaded data
+	USMinionDataAsset* MinionDA = Cast<USMinionDataAsset>(AssetManager->GetPrimaryAssetObject(MinionAssetId));
+
+	const TSubclassOf<AActor> MinionClass = MinionDA->MinionClass;
+	/* We have valid results and aren't at the spawn limit, so spawn the AI at the first result location. */
+	FActorSpawnParameters ActorSpawnParams;
+	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	if (AActor* SpawnedBot = GetWorld()->SpawnActor<AActor>(MinionClass, Location, FRotator::ZeroRotator, ActorSpawnParams))
+	{
+		MultiplayerScreenLog(this, FString::Printf(TEXT("Spawned bot %s (%s)"), *GetNameSafe(SpawnedBot), *GetNameSafe(MinionClass)));
+		for (TSubclassOf<USAction> ActionClass : MinionDA->DefaultActions)
+		{
+			if (USActionComponent* ActionComp
+				= Cast<USActionComponent>(SpawnedBot->GetComponentByClass(USActionComponent::StaticClass())))
+			{
+				ActionComp->AddAction(SpawnedBot, ActionClass);
+			}
+		}
+	}
+	DrawDebugSphere(GetWorld(), Location, 25, 8, FColor::Green, false, BotSpawnInterval);
 }
 
 void ASGameModeBase::RespawnPlayerElapsed(AController* Controller)

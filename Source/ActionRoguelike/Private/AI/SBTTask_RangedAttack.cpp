@@ -35,6 +35,7 @@ EBTNodeResult::Type USBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& O
 
 	/* Get the pawn who owns this blackboard/behavior tree, via the AIController */
 	AAIController* AIController = OwnerComp.GetAIOwner();
+
 	if (!ensure(AIController)) return EBTNodeResult::Failed;
 	/* Cast to character because we want the socket location for spawning */
 	ACharacter* AICharacter = Cast<ACharacter>(AIController->GetPawn());
